@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotherDuck | The Cloud Data Warehouse Built on DuckDB</title>
+    <style>
+        @font-face {
+            font-family: 'Aeonik Mono';
+            src: url(/fonts/AeonikMono/AeonikMono-Regular.woff2) format('woff2'),
+                 url(/fonts/AeonikMono/AeonikMono-Regular.woff) format('woff');
+            font-style: normal;
+            font-weight: 400;
+            font-display: swap;
+        }
+
+        :root {
+            --header-mobile: 70px;
+            --header-desktop: 90px;
+            --eyebrow-mobile: 70px;
+            --eyebrow-desktop: 55px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font-family: "Aeonik Mono", sans-serif;
+            vertical-align: baseline;
+            text-decoration: none;
+        }
+
+        html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, textarea, video, button, input {
+            box-sizing: border-box;
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            font-size: 100%;
+            font-family: "Aeonik Mono", sans-serif;
+            vertical-align: baseline;
+            text-decoration: none;
+        }
+
+        @media (min-width: 728px) {
+            * {
+                scroll-margin-top: var(--eyebrow-desktop);
+            }
+        }
+
+        div {
+            display: block;
+            unicode-bidi: isolate;
+        }
+
+        body {
+            line-height: 1;
+            background-color: rgb(244, 239, 234);
+            color: rgb(56, 56, 56);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgb(85, 85, 85); }
+        ::-webkit-scrollbar-thumb { background: rgb(136, 136, 136); }
+        ::-webkit-scrollbar-track { background: rgb(241, 241, 241); }
+
+        .fJopld { overflow: hidden; }
+
+        /* Top Banner */
+        .top-banner {
+            background: #facc15;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #383838;
+            border-bottom: 2px solid #000;
+            text-transform: uppercase;
+        }
+
+        .top-banner a {
+            color: #383838;
+            text-decoration: none;
+            margin-left: 6px;
+            font-weight: 800;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 0 48px;
+            height: var(--header-desktop);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgb(244, 239, 234);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #383838;
+            text-decoration: none;
+        }
+
+        .logo-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-link:hover { color: #383838; }
+
+        .nav-link.has-dropdown::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #666;
+            margin-left: 4px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn-login {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-login:hover { color: #383838; }
+
+        .btn-primary-nav {
+            background: #60a5fa;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        .btn-primary-nav:hover { background: #3b82f6; }
+
+        /* Hero Section */
+        .hero {
+            padding: 70px 48px 100px;
+            text-align: center;
+            position: relative;
+            background: rgb(244, 239, 234);
+            overflow: visible;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 5.5vw, 58px);
+            font-weight: 400;
+            letter-spacing: 8px;
+            line-height: 1.15;
+            max-width: 850px;
+            margin: 0 auto 24px;
+            text-transform: uppercase;
+            color: #383838;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            color: #666;
+            max-width: 620px;
+            margin: 0 auto 36px;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 50px;
+        }
+
+        .btn-hero-primary {
+            background: #60a5fa;
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border: none;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-hero-primary:hover {
+            background: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .btn-hero-secondary {
+            background: transparent;
+            color: #383838;
+            padding: 14px 28px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border: 1.5px solid #ccc;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-hero-secondary:hover {
+            border-color: #999;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Hero Visual Area */
+        .hero-visual {
+            position: relative;
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        /* Cloud Decorations */
+        .cloud-deco {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            z-index: 1;
+            border: 1.5px solid #000;
+        }
+
+        .cloud-deco::before,
+        .cloud-deco::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            border: 1.5px solid #000;
+        }
+
+        .cloud-a {
+            width: 90px;
+            height: 32px;
+            top: 15%;
+            left: 6%;
+        }
+        .cloud-a::before {
+            width: 42px;
+            height: 42px;
+            top: -22px;
+            left: 12px;
+        }
+        .cloud-a::after {
+            width: 32px;
+            height: 32px;
+            top: -12px;
+            right: 12px;
+        }
+
+        .cloud-b {
+            width: 110px;
+            height: 36px;
+            top: 55%;
+            left: 0%;
+        }
+        .cloud-b::before {
+            width: 52px;
+            height: 52px;
+            top: -26px;
+            left: 18px;
+        }
+        .cloud-b::after {
+            width: 38px;
+            height: 38px;
+            top: -16px;
+            right: 16px;
+        }
+
+        .cloud-c {
+            width: 130px;
+            height: 42px;
+            bottom: 5%;
+            right: 2%;
+        }
+        .cloud-c::before {
+            width: 62px;
+            height: 62px;
+            top: -32px;
+            left: 22px;
+        }
+        .cloud-c::after {
+            width: 46px;
+            height: 46px;
+            top: -20px;
+            right: 22px;
+        }
+
+        .cloud-d {
+            width: 75px;
+            height: 28px;
+            top: 30%;
+            right: 25%;
+        }
+        .cloud-d::before {
+            width: 35px;
+            height: 35px;
+            top: -18px;
+            left: 10px;
+        }
+        .cloud-d::after {
+            width: 26px;
+            height: 26px;
+            top: -10px;
+            right: 10px;
+        }
+
+        /* Floating Shapes */
+        .float-shape {
+            position: absolute;
+            z-index: 1;
+        }
+
+        .shape-tri {
+            top: 28%;
+            left: 9%;
+            width: 0;
+            height: 0;
+            border-left: 11px solid transparent;
+            border-right: 11px solid transparent;
+            border-bottom: 18px solid #60a5fa;
+            filter: drop-shadow(0 0 0 1.5px #000);
+        }
+
+        .shape-sq {
+            top: 52%;
+            left: -1%;
+            width: 18px;
+            height: 18px;
+            background: #f87171;
+            transform: rotate(12deg);
+            border-radius: 2px;
+            border: 1.5px solid #000;
+        }
+
+        .shape-diamond {
+            bottom: 22%;
+            right: 7%;
+            width: 20px;
+            height: 20px;
+            background: #2dd4bf;
+            transform: rotate(45deg);
+            border-radius: 3px;
+            border: 1.5px solid #000;
+        }
+
+        /* Demo Window */
+        .demo-window {
+            position: relative;
+            z-index: 10;
+            background: #2d2d2d;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-window-shadow {
+            position: absolute;
+            bottom: -12px;
+            left: 12px;
+            right: -12px;
+            height: 100%;
+            background: #2d2d2d;
+            border-radius: 0;
+            z-index: -1;
+        }
+
+        .demo-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 16px;
+            background: #222;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .demo-titlebar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .demo-brand svg { width: 18px; height: 18px; }
+
+        .demo-brand-badge {
+            font-size: 9.5px;
+            color: #777;
+            letter-spacing: 0.3px;
+        }
+
+        .demo-titlebar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .questions-badge {
+            background: #facc15;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-btn {
+            color: #777;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+        .clear-btn:hover { color: #aaa; }
+
+        .demo-body {
+            padding: 18px 20px;
+            background: #fff;
+        }
+
+        /* Task List */
+        .task-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .task-list {
+            margin-bottom: 16px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 0;
+            font-size: 12.5px;
+            color: #888;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .task-check {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .task-check.done {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .task-check.pending {
+            background: #555;
+            color: #999;
+        }
+
+        .task-item.done-task { color: #aaa; }
+
+        /* Eisenhower Matrix */
+        .eisenhower-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .quadrant {
+            background: #f8f8f8;
+            border-radius: 8px;
+            padding: 14px;
+            border: 2px solid #000;
+        }
+
+        .quadrant.urgent-important {
+            background: #fef2f2;
+            border-color: #dc2626;
+        }
+
+        .quadrant.not-urgent-important {
+            background: #f0fdf4;
+            border-color: #16a34a;
+        }
+
+        .quadrant.urgent-not-important {
+            background: #fffbeb;
+            border-color: #d97706;
+        }
+
+        .quadrant.not-urgent-not-important {
+            background: #f8fafc;
+            border-color: #64748b;
+        }
+
+        .quadrant-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .quadrant.urgent-important .quadrant-title { color: #dc2626; }
+        .quadrant.not-urgent-important .quadrant-title { color: #16a34a; }
+        .quadrant.urgent-not-important .quadrant-title { color: #d97706; }
+        .quadrant.not-urgent-not-important .quadrant-title { color: #64748b; }
+
+        .quadrant-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .matrix-task-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #fff;
+            border-radius: 4px;
+            font-size: 11.5px;
+            color: #383838;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .matrix-task-item:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .matrix-task-check {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .matrix-task-check.done {
+            background: #4ade80;
+            color: #000;
+        }
+
+        .matrix-task-check.pending {
+            background: #e5e7eb;
+            color: #9ca3af;
+        }
+
+        /* Result Card */
+        .result-card {
+            background: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .result-card-inner {
+            padding: 22px 24px;
+            background: #fff;
+            border: 2px solid #000;
+            border-radius: 6px;
+        }
+
+        .result-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 2.5px solid #facc15;
+        }
+
+        .result-title-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #383838;
+            line-height: 1.4;
+            max-width: 85%;
+        }
+
+        .result-refresh-icon {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #888;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .result-section-block {
+            margin-bottom: 16px;
+        }
+
+        .result-section-heading {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #383838;
+            margin-bottom: 6px;
+        }
+
+        .result-desc-text {
+            font-size: 12.5px;
+            line-height: 1.65;
+            color: #666;
+        }
+
+        .result-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 18px 0;
+            padding: 18px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 26px;
+            font-weight: 700;
+            color: #383838;
+            margin-bottom: 3px;
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 2px;
+        }
+
+        .stat-delta {
+            font-size: 10px;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .result-footer-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Demo Input */
+        .demo-input-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px;
+            background: #222;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .demo-input-field {
+            flex: 1;
+            padding: 10px 14px;
+            background: #3a3a3a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            color: #888;
+            font-size: 12.5px;
+            font-family: "Aeonik Mono", sans-serif;
+            outline: none;
+        }
+
+        .demo-input-field::placeholder { color: #666; }
+
+        .demo-send-btn {
+            width: 38px;
+            height: 38px;
+            background: #444;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #888;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .demo-send-btn:hover { background: #555; }
+
+        /* Duck Character */
+        .duck-wrapper {
+            position: absolute;
+            top: -55px;
+            right: 50px;
+            z-index: 20;
+        }
+
+        .duck-bubble {
+            position: absolute;
+            top: -48px;
+            right: -30px;
+            background: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            color: #383838;
+        }
+
+        .duck-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 22px;
+            width: 0;
+            height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 7px solid #fff;
+        }
+
+        .duck-svg {
+            width: 82px;
+            height: 82px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .navbar { padding: 0 24px; height: var(--header-mobile); }
+            .nav-links { display: none; }
+            .hero { padding: 40px 24px 70px; }
+            .result-stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .duck-wrapper { display: none; }
+            .cloud-deco, .float-shape { display: none; }
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 28px; letter-spacing: 4px; }
+            .hero-buttons { flex-direction: column; width: 100%; align-items: center; }
+            .hero-buttons button { width: 100%; max-width: 280px; justify-content: center; }
+            .result-stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Banner -->
+    <div class="top-banner">
+        Live Workshop: Zero-Latency Analytics in Your Application with Dives <a href="#">Register →</a>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 35 C20 20, 35 12, 50 12 C65 12, 80 20, 80 35 C80 50, 68 58, 55 62 L55 78 C55 83, 50 86, 50 86 C50 86, 45 83, 45 78 L45 62 C32 58, 20 50, 20 35Z" fill="#f97316"/>
+                    <circle cx="38" cy="34" r="5" fill="#383838"/>
+                    <circle cx="62" cy="34" r="5" fill="#383838"/>
+                    <ellipse cx="50" cy="48" rx="12" ry="8" fill="#f97316"/>
+                    <path d="M50 48 L54 56 L46 56 Z" fill="#fbbf24"/>
+                    <path d="M28 30 C18 24, 10 28, 8 36 C6 42, 12 48, 22 44" fill="#f97316"/>
+                    <path d="M72 30 C82 24, 90 28, 92 36 C94 42, 88 48, 78 44" fill="#f97316"/>
+                </svg>
+            </div>
+            MotherDuck
+        </a>
+        <div class="nav-links">
+            <a href="#" class="nav-link has-dropdown">Product</a>
+            <a href="#" class="nav-link has-dropdown">Community</a>
+            <a href="#" class="nav-link has-dropdown">Company</a>
+            <a href="#" class="nav-link">Docs</a>
+            <a href="#" class="nav-link">Pricing</a>
+            <a href="#" class="nav-link">Contact Us</a>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-login">Log In</button>
+            <button class="btn-primary-nav">Start Free</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero fJopld">
+        <h1>Infrastructure for Answers</h1>
+        <p class="hero-subtitle">The cloud data warehouse built for answers, in SQL or natural language. Fast, serverless analytics powered by DuckDB—from production apps to internal insights.</p>
+        <div class="hero-buttons">
+            <button class="btn-hero-primary">Try 7 Days Free →</button>
+            <button class="btn-hero-secondary">Book a Demo</button>
+        </div>
+
+        <!-- Floating Shapes -->
+        <div class="float-shape shape-tri"></div>
+        <div class="float-shape shape-sq"></div>
+        <div class="float-shape shape-diamond"></div>
+
+        <!-- Clouds -->
+        <div class="cloud-deco cloud-a"></div>
+        <div class="cloud-deco cloud-b"></div>
+        <div class="cloud-deco cloud-c"></div>
+        <div class="cloud-deco cloud-d"></div>
+
+        <div class="hero-visual">
+            <!-- Duck Character -->
+            <div class="duck-wrapper">
+                <div class="duck-bubble">Live demo, quack<br>a question! ↓</div>
+                <svg class="duck-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="62" rx="30" ry="24" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                    <ellipse cx="50" cy="40" rx="24" ry="22" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                    <circle cx="43" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                    <circle cx="57" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                    <ellipse cx="50" cy="47" rx="9" ry="6" fill="#f97316" stroke="#000" stroke-width="1"/>
+                    <path d="M29 48 Q18 42 14 50 Q10 56 16 62 Q22 66 30 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                    <path d="M71 48 Q82 42 86 50 Q90 56 84 62 Q78 66 70 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                    <path d="M36 78 L41 92 L46 78" fill="#facc15" stroke="#000" stroke-width="1"/>
+                    <path d="M54 78 L59 92 L64 78" fill="#facc15" stroke="#000" stroke-width="1"/>
+                </svg>
+            </div>
+
+            <!-- Demo Window -->
+            <div class="demo-window">
+                <div class="demo-titlebar">
+                    <div class="demo-titlebar-left">
+                        <div class="demo-brand">
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 35 C20 20, 35 12, 50 12 C65 12, 80 20, 80 35 C80 50, 68 58, 55 62 L55 78 C55 83, 50 86, 50 86 C50 86, 45 83, 45 78 L45 62 C32 58, 20 50, 20 35Z" fill="#f97316"/>
+                                <circle cx="38" cy="34" r="5" fill="#fff"/>
+                                <circle cx="62" cy="34" r="5" fill="#fff"/>
+                                <ellipse cx="50" cy="48" rx="12" ry="8" fill="#f97316"/>
+                            </svg>
+                            MotherDuck AI
+                        </div>
+                        <span class="demo-brand-badge">Powered by MotherDuck MCP</span>
+                    </div>
+                    <div class="demo-titlebar-right">
+                        <span class="questions-badge">2 Questions Left!</span>
+                        <span class="clear-btn">Clear</span>
+                    </div>
+                </div>
+                <div class="demo-body">
+                    <div class="task-section-label">Eisenhower Matrix</div>
+                    <div class="eisenhower-matrix">
+                        <!-- 第一象限：重要且紧急 -->
+                        <div class="quadrant urgent-important">
+                            <div class="quadrant-title">重要 & 紧急 · Do First</div>
+                            <div class="quadrant-tasks">
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check done">✓</div>
+                                    修复生产环境Bug
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    提交项目截止日期报告
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    回复客户紧急邮件
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第二象限：重要但不紧急 -->
+                        <div class="quadrant not-urgent-important">
+                            <div class="quadrant-title">重要 & 不紧急 · Schedule</div>
+                            <div class="quadrant-tasks">
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check done">✓</div>
+                                    制定季度产品规划
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    学习新技术框架
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    团队技能培训计划
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第三象限：不重要但紧急 -->
+                        <div class="quadrant urgent-not-important">
+                            <div class="quadrant-title">不重要 & 紧急 · Delegate</div>
+                            <div class="quadrant-tasks">
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check done">✓</div>
+                                    安排会议室预订
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    回复非核心群消息
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    处理日常审批流程
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 第四象限：不重要且不紧急 -->
+                        <div class="quadrant not-urgent-not-important">
+                            <div class="quadrant-title">不重要 & 不紧急 · Eliminate</div>
+                            <div class="quadrant-tasks">
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check done">✓</div>
+                                    整理旧文件归档
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    浏览技术资讯网站
+                                </div>
+                                <div class="matrix-task-item">
+                                    <div class="matrix-task-check pending">○</div>
+                                    社交媒体动态查看
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-input-bar">
+                    <input type="text" class="demo-input-field" placeholder="Ask a question about the data...">
+                    <div class="demo-send-btn">➤</div>
+                </div>
+                <div class="demo-window-shadow"></div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
