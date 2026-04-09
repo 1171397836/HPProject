@@ -283,6 +283,7 @@
             border-radius: 50px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             z-index: 1;
+            border: 1.5px solid #000;
         }
 
         .cloud-deco::before,
@@ -291,6 +292,7 @@
             position: absolute;
             background: #fff;
             border-radius: 50%;
+            border: 1.5px solid #000;
         }
 
         .cloud-a {
@@ -383,6 +385,7 @@
             border-left: 11px solid transparent;
             border-right: 11px solid transparent;
             border-bottom: 18px solid #60a5fa;
+            filter: drop-shadow(0 0 0 1.5px #000);
         }
 
         .shape-sq {
@@ -393,6 +396,7 @@
             background: #f87171;
             transform: rotate(12deg);
             border-radius: 2px;
+            border: 1.5px solid #000;
         }
 
         .shape-diamond {
@@ -403,6 +407,7 @@
             background: #2dd4bf;
             transform: rotate(45deg);
             border-radius: 3px;
+            border: 1.5px solid #000;
         }
 
         /* Demo Window */
@@ -476,7 +481,7 @@
 
         .demo-body {
             padding: 18px 20px;
-            background: #2d2d2d;
+            background: #fff;
         }
 
         /* Task List */
@@ -538,6 +543,9 @@
 
         .result-card-inner {
             padding: 22px 24px;
+            background: #fff;
+            border: 2px solid #000;
+            border-radius: 6px;
         }
 
         .result-header-row {
@@ -790,15 +798,15 @@
             <div class="duck-wrapper">
                 <div class="duck-bubble">Live demo, quack<br>a question! ↓</div>
                 <svg class="duck-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="50" cy="62" rx="30" ry="24" fill="#fff"/>
-                    <ellipse cx="50" cy="40" rx="24" ry="22" fill="#fff"/>
-                    <circle cx="43" cy="37" r="3.5" fill="#383838"/>
-                    <circle cx="57" cy="37" r="3.5" fill="#383838"/>
-                    <ellipse cx="50" cy="47" rx="9" ry="6" fill="#f97316"/>
-                    <path d="M29 48 Q18 42 14 50 Q10 56 16 62 Q22 66 30 60" fill="#fff" stroke="#e5e5e5" stroke-width="1"/>
-                    <path d="M71 48 Q82 42 86 50 Q90 56 84 62 Q78 66 70 60" fill="#fff" stroke="#e5e5e5" stroke-width="1"/>
-                    <path d="M36 78 L41 92 L46 78" fill="#facc15" stroke="#e5e5e5" stroke-width="0.5"/>
-                    <path d="M54 78 L59 92 L64 78" fill="#facc15" stroke="#e5e5e5" stroke-width="0.5"/>
+                    <ellipse cx="50" cy="62" rx="30" ry="24" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                    <ellipse cx="50" cy="40" rx="24" ry="22" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                    <circle cx="43" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                    <circle cx="57" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                    <ellipse cx="50" cy="47" rx="9" ry="6" fill="#f97316" stroke="#000" stroke-width="1"/>
+                    <path d="M29 48 Q18 42 14 50 Q10 56 16 62 Q22 66 30 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                    <path d="M71 48 Q82 42 86 50 Q90 56 84 62 Q78 66 70 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                    <path d="M36 78 L41 92 L46 78" fill="#facc15" stroke="#000" stroke-width="1"/>
+                    <path d="M54 78 L59 92 L64 78" fill="#facc15" stroke="#000" stroke-width="1"/>
                 </svg>
             </div>
 
