@@ -1,0 +1,174 @@
+/* ============================================
+   铁腕 - 艾森豪威尔矩阵样式
+   包含：矩阵网格、象限卡片、任务项、优先级图标
+   ============================================ */
+
+/* Eisenhower Matrix Grid */
+.eisenhower-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* Quadrant Cards */
+.quadrant {
+    background: #f8f8f8;
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    border: 2px solid #000;
+}
+
+.quadrant.urgent-important {
+    background: var(--color-urgent-important-bg);
+    border-color: var(--color-urgent-important);
+}
+
+.quadrant.not-urgent-important {
+    background: var(--color-not-urgent-important-bg);
+    border-color: var(--color-not-urgent-important);
+}
+
+.quadrant.urgent-not-important {
+    background: var(--color-urgent-not-important-bg);
+    border-color: var(--color-urgent-not-important);
+}
+
+.quadrant.not-urgent-not-important {
+    background: var(--color-not-urgent-not-important-bg);
+    border-color: var(--color-not-urgent-not-important);
+}
+
+/* Quadrant Title */
+.quadrant-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.quadrant.urgent-important .quadrant-title { 
+    color: var(--color-urgent-important); 
+}
+.quadrant.not-urgent-important .quadrant-title { 
+    color: var(--color-not-urgent-important); 
+}
+.quadrant.urgent-not-important .quadrant-title { 
+    color: var(--color-urgent-not-important); 
+}
+.quadrant.not-urgent-not-important .quadrant-title { 
+    color: var(--color-not-urgent-not-important); 
+}
+
+/* Priority Icons */
+.priority-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.priority-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Quadrant Tasks Container */
+.quadrant-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Task Item */
+.matrix-task-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #fff;
+    border-radius: var(--radius-md);
+    font-size: 11.5px;
+    color: var(--color-text-primary);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.matrix-task-item:hover {
+    transform: translateX(2px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Task Checkbox */
+.matrix-task-check {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.matrix-task-check.done {
+    background: var(--color-success);
+    color: #000;
+}
+
+.matrix-task-check.pending {
+    background: var(--color-pending);
+    color: var(--color-pending-text);
+}
+
+/* Legacy Task List Styles (for backward compatibility) */
+.task-list {
+    margin-bottom: 16px;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    font-size: 12.5px;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.task-check {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.task-check.done {
+    background: var(--color-success);
+    color: #000;
+}
+
+.task-check.pending {
+    background: #555;
+    color: #999;
+}
+
+.task-item.done-task { 
+    color: #aaa; 
+}

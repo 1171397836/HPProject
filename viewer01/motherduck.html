@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotherDuck | The Cloud Data Warehouse Built on DuckDB</title>
+    <title>铁腕 | 智能任务记忆与安排助手</title>
     <style>
         @font-face {
             font-family: 'Aeonik Mono';
@@ -116,8 +116,8 @@
         }
 
         .logo-icon svg {
-            width: 28px;
-            height: 28px;
+            width: 64px;
+            height: 64px;
         }
 
         .nav-links {
@@ -380,12 +380,14 @@
         .shape-tri {
             top: 28%;
             left: 9%;
-            width: 0;
-            height: 0;
-            border-left: 11px solid transparent;
-            border-right: 11px solid transparent;
-            border-bottom: 18px solid #60a5fa;
-            filter: drop-shadow(0 0 0 1.5px #000);
+            width: 22px;
+            height: 22px;
+        }
+
+        .shape-tri svg {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         .shape-sq {
@@ -457,7 +459,7 @@
             font-weight: 700;
         }
 
-        .demo-brand svg { width: 18px; height: 18px; }
+        .demo-brand svg { width: 44px; height: 44px; }
 
         .demo-brand-badge {
             font-size: 9.5px;
@@ -583,6 +585,10 @@
         }
 
         .quadrant-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.8px;
@@ -596,6 +602,19 @@
         .quadrant.not-urgent-important .quadrant-title { color: #16a34a; }
         .quadrant.urgent-not-important .quadrant-title { color: #d97706; }
         .quadrant.not-urgent-not-important .quadrant-title { color: #64748b; }
+
+        .priority-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .priority-icon svg {
+            width: 100%;
+            height: 100%;
+        }
 
         .quadrant-tasks {
             display: flex;
@@ -790,6 +809,28 @@
         }
         .demo-send-btn:hover { background: #555; }
 
+        /* Task Type Selector Button */
+        .task-type-btn {
+            width: 38px;
+            height: 38px;
+            background: #f97316;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 300;
+            flex-shrink: 0;
+            border: none;
+            transition: all 0.2s;
+        }
+        .task-type-btn:hover {
+            background: #ea580c;
+            transform: scale(1.05);
+        }
+
         /* Duck Character */
         .duck-wrapper {
             position: absolute;
@@ -851,7 +892,7 @@
 <body>
     <!-- Top Banner -->
     <div class="top-banner">
-        Live Workshop: Zero-Latency Analytics in Your Application with Dives <a href="#">Register →</a>
+        铁腕全新升级：AI驱动的智能任务管理，让效率翻倍 <a href="#">立即体验 →</a>
     </div>
 
     <!-- Navigation -->
@@ -859,42 +900,46 @@
         <a href="#" class="logo">
             <div class="logo-icon">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 35 C20 20, 35 12, 50 12 C65 12, 80 20, 80 35 C80 50, 68 58, 55 62 L55 78 C55 83, 50 86, 50 86 C50 86, 45 83, 45 78 L45 62 C32 58, 20 50, 20 35Z" fill="#f97316"/>
-                    <circle cx="38" cy="34" r="5" fill="#383838"/>
-                    <circle cx="62" cy="34" r="5" fill="#383838"/>
-                    <ellipse cx="50" cy="48" rx="12" ry="8" fill="#f97316"/>
-                    <path d="M50 48 L54 56 L46 56 Z" fill="#fbbf24"/>
-                    <path d="M28 30 C18 24, 10 28, 8 36 C6 42, 12 48, 22 44" fill="#f97316"/>
-                    <path d="M72 30 C82 24, 90 28, 92 36 C94 42, 88 48, 78 44" fill="#f97316"/>
+                    <path d="M25 20 L75 20 L80 35 L75 50 L50 55 L25 50 L20 35 Z" fill="#383838"/>
+                    <rect x="30" y="30" width="40" height="25" fill="#f97316"/>
+                    <circle cx="40" cy="42" r="4" fill="#fff"/>
+                    <circle cx="60" cy="42" r="4" fill="#fff"/>
+                    <path d="M45 55 L50 65 L55 55" fill="#facc15"/>
+                    <rect x="35" y="60" width="8" height="15" fill="#383838"/>
+                    <rect x="57" y="60" width="8" height="15" fill="#383838"/>
                 </svg>
             </div>
-            MotherDuck
+            铁腕
         </a>
         <div class="nav-links">
-            <a href="#" class="nav-link has-dropdown">Product</a>
-            <a href="#" class="nav-link has-dropdown">Community</a>
-            <a href="#" class="nav-link has-dropdown">Company</a>
-            <a href="#" class="nav-link">Docs</a>
-            <a href="#" class="nav-link">Pricing</a>
-            <a href="#" class="nav-link">Contact Us</a>
+            <a href="#" class="nav-link has-dropdown">功能特性</a>
+            <a href="#" class="nav-link has-dropdown">使用场景</a>
+            <a href="#" class="nav-link has-dropdown">关于我们</a>
+            <a href="#" class="nav-link">帮助文档</a>
+            <a href="#" class="nav-link">价格方案</a>
+            <a href="#" class="nav-link">联系我们</a>
         </div>
         <div class="nav-buttons">
-            <button class="btn-login">Log In</button>
-            <button class="btn-primary-nav">Start Free</button>
+            <button class="btn-login">登录</button>
+            <button class="btn-primary-nav">免费开始</button>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero fJopld">
-        <h1>Infrastructure for Answers</h1>
-        <p class="hero-subtitle">The cloud data warehouse built for answers, in SQL or natural language. Fast, serverless analytics powered by DuckDB—from production apps to internal insights.</p>
+        <h1>铁腕 · 掌控每一刻</h1>
+        <p class="hero-subtitle">智能任务记忆与安排助手，帮你记住所有待办事项，科学规划优先级。基于艾森豪威尔矩阵，让重要的事不再被紧急的事淹没。</p>
         <div class="hero-buttons">
-            <button class="btn-hero-primary">Try 7 Days Free →</button>
-            <button class="btn-hero-secondary">Book a Demo</button>
+            <button class="btn-hero-primary">免费试用 7 天 →</button>
+            <button class="btn-hero-secondary">预约演示</button>
         </div>
 
         <!-- Floating Shapes -->
-        <div class="float-shape shape-tri"></div>
+        <div class="float-shape shape-tri">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3L3 20h18L12 3z" fill="#60a5fa" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+        </div>
         <div class="float-shape shape-sq"></div>
         <div class="float-shape shape-diamond"></div>
 
@@ -905,9 +950,9 @@
         <div class="cloud-deco cloud-d"></div>
 
         <div class="hero-visual">
-            <!-- Duck Character -->
+            <!-- Assistant Character -->
             <div class="duck-wrapper">
-                <div class="duck-bubble">Live demo, quack<br>a question! ↓</div>
+                <div class="duck-bubble">我是铁腕助手<br>让我帮你安排任务 ↓</div>
                 <svg class="duck-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <ellipse cx="50" cy="62" rx="30" ry="24" fill="#fff" stroke="#000" stroke-width="1.5"/>
                     <ellipse cx="50" cy="40" rx="24" ry="22" fill="#fff" stroke="#000" stroke-width="1.5"/>
@@ -927,26 +972,35 @@
                     <div class="demo-titlebar-left">
                         <div class="demo-brand">
                             <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 35 C20 20, 35 12, 50 12 C65 12, 80 20, 80 35 C80 50, 68 58, 55 62 L55 78 C55 83, 50 86, 50 86 C50 86, 45 83, 45 78 L45 62 C32 58, 20 50, 20 35Z" fill="#f97316"/>
-                                <circle cx="38" cy="34" r="5" fill="#fff"/>
-                                <circle cx="62" cy="34" r="5" fill="#fff"/>
-                                <ellipse cx="50" cy="48" rx="12" ry="8" fill="#f97316"/>
+                                <path d="M25 20 L75 20 L80 35 L75 50 L50 55 L25 50 L20 35 Z" fill="#383838"/>
+                                <rect x="30" y="30" width="40" height="25" fill="#f97316"/>
+                                <circle cx="40" cy="42" r="4" fill="#fff"/>
+                                <circle cx="60" cy="42" r="4" fill="#fff"/>
                             </svg>
-                            MotherDuck AI
+                            铁腕 AI 助手
                         </div>
-                        <span class="demo-brand-badge">Powered by MotherDuck MCP</span>
+                        <span class="demo-brand-badge">智能任务管理引擎</span>
                     </div>
                     <div class="demo-titlebar-right">
-                        <span class="questions-badge">2 Questions Left!</span>
-                        <span class="clear-btn">Clear</span>
+                        <span class="questions-badge">今日剩余 3 个任务</span>
+                        <span class="clear-btn">清空</span>
                     </div>
                 </div>
                 <div class="demo-body">
-                    <div class="task-section-label">Eisenhower Matrix</div>
+                    <div class="task-section-label">任务优先级矩阵</div>
                     <div class="eisenhower-matrix">
                         <!-- 第一象限：重要且紧急 -->
                         <div class="quadrant urgent-important">
-                            <div class="quadrant-title">重要 & 紧急 · Do First</div>
+                            <div class="quadrant-title">
+                                <div class="priority-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                        <path d="M2 17l10 5 10-5"/>
+                                        <path d="M2 12l10 5 10-5"/>
+                                    </svg>
+                                </div>
+                                <span>立即做</span>
+                            </div>
                             <div class="quadrant-tasks">
                                 <div class="matrix-task-item">
                                     <div class="matrix-task-check done">✓</div>
@@ -965,7 +1019,15 @@
 
                         <!-- 第二象限：重要但不紧急 -->
                         <div class="quadrant not-urgent-important">
-                            <div class="quadrant-title">重要 & 不紧急 · Schedule</div>
+                            <div class="quadrant-title">
+                                <div class="priority-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                </div>
+                                <span>计划做</span>
+                            </div>
                             <div class="quadrant-tasks">
                                 <div class="matrix-task-item">
                                     <div class="matrix-task-check done">✓</div>
@@ -984,7 +1046,17 @@
 
                         <!-- 第三象限：不重要但紧急 -->
                         <div class="quadrant urgent-not-important">
-                            <div class="quadrant-title">不重要 & 紧急 · Delegate</div>
+                            <div class="quadrant-title">
+                                <div class="priority-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <span>委托做</span>
+                            </div>
                             <div class="quadrant-tasks">
                                 <div class="matrix-task-item">
                                     <div class="matrix-task-check done">✓</div>
@@ -1003,7 +1075,16 @@
 
                         <!-- 第四象限：不重要且不紧急 -->
                         <div class="quadrant not-urgent-not-important">
-                            <div class="quadrant-title">不重要 & 不紧急 · Eliminate</div>
+                            <div class="quadrant-title">
+                                <div class="priority-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                </div>
+                                <span>不做</span>
+                            </div>
                             <div class="quadrant-tasks">
                                 <div class="matrix-task-item">
                                     <div class="matrix-task-check done">✓</div>
@@ -1022,7 +1103,8 @@
                     </div>
                 </div>
                 <div class="demo-input-bar">
-                    <input type="text" class="demo-input-field" placeholder="Ask a question about the data...">
+                    <div class="task-type-btn" title="选择任务类型">+</div>
+                    <input type="text" class="demo-input-field" placeholder="添加新任务，例如：下午3点开会...">
                     <div class="demo-send-btn">➤</div>
                 </div>
                 <div class="demo-window-shadow"></div>

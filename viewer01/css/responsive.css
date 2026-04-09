@@ -1,0 +1,53 @@
+/* ============================================
+   铁腕 - 响应式样式
+   包含：平板、移动端的适配规则
+   ============================================ */
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+    .navbar { 
+        padding: 0 24px; 
+        height: var(--header-mobile); 
+    }
+    
+    .nav-links { 
+        display: none; 
+    }
+    
+    .hero { 
+        padding: 40px 24px 70px; 
+    }
+    
+    .duck-wrapper { 
+        display: none; 
+    }
+    
+    .cloud-deco, .float-shape { 
+        display: none; 
+    }
+}
+
+/* Mobile (≤ 640px) */
+@media (max-width: 640px) {
+    .hero h1 { 
+        font-size: 28px; 
+        letter-spacing: 4px; 
+    }
+    
+    .hero-buttons { 
+        flex-direction: column; 
+        width: 100%; 
+        align-items: center; 
+    }
+    
+    .hero-buttons button { 
+        width: 100%; 
+        max-width: 280px; 
+        justify-content: center; 
+    }
+    
+    /* Matrix becomes single column on mobile */
+    .eisenhower-matrix { 
+        grid-template-columns: 1fr; 
+    }
+}

@@ -1,0 +1,312 @@
+/* ============================================
+   铁腕 - 布局样式
+   包含：顶部横幅、导航栏、Hero区域、装饰元素
+   ============================================ */
+
+/* Top Banner */
+.top-banner {
+    background: var(--color-brand-yellow);
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid #000;
+    text-transform: uppercase;
+}
+
+.top-banner a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    margin-left: 6px;
+    font-weight: 800;
+}
+
+/* Navigation */
+.navbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0 48px;
+    height: var(--header-desktop);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-bg-page);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.logo-icon svg {
+    width: 64px;
+    height: 64px;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.nav-link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-link:hover { 
+    color: var(--color-text-primary); 
+}
+
+.nav-link.has-dropdown::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid var(--color-text-secondary);
+    margin-left: 4px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Hero Section */
+.hero {
+    padding: 70px 48px 100px;
+    text-align: center;
+    position: relative;
+    background: var(--color-bg-page);
+    overflow: visible;
+}
+
+.hero h1 {
+    font-size: clamp(40px, 5.5vw, 58px);
+    font-weight: 400;
+    letter-spacing: 8px;
+    line-height: 1.15;
+    max-width: 850px;
+    margin: 0 auto 24px;
+    text-transform: uppercase;
+    color: var(--color-text-primary);
+}
+
+.hero-subtitle {
+    font-size: 15px;
+    color: var(--color-text-secondary);
+    max-width: 620px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+    font-weight: 400;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 50px;
+}
+
+.hero-visual {
+    position: relative;
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+/* Cloud Decorations */
+.cloud-deco {
+    position: absolute;
+    background: #fff;
+    border-radius: 50px;
+    box-shadow: var(--shadow-float);
+    z-index: 1;
+    border: 1.5px solid #000;
+}
+
+.cloud-deco::before,
+.cloud-deco::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+}
+
+.cloud-a {
+    width: 90px;
+    height: 32px;
+    top: 15%;
+    left: 6%;
+}
+.cloud-a::before {
+    width: 42px;
+    height: 42px;
+    top: -22px;
+    left: 12px;
+}
+.cloud-a::after {
+    width: 32px;
+    height: 32px;
+    top: -12px;
+    right: 12px;
+}
+
+.cloud-b {
+    width: 110px;
+    height: 36px;
+    top: 55%;
+    left: 0%;
+}
+.cloud-b::before {
+    width: 52px;
+    height: 52px;
+    top: -26px;
+    left: 18px;
+}
+.cloud-b::after {
+    width: 38px;
+    height: 38px;
+    top: -16px;
+    right: 16px;
+}
+
+.cloud-c {
+    width: 130px;
+    height: 42px;
+    bottom: 5%;
+    right: 2%;
+}
+.cloud-c::before {
+    width: 62px;
+    height: 62px;
+    top: -32px;
+    left: 22px;
+}
+.cloud-c::after {
+    width: 46px;
+    height: 46px;
+    top: -20px;
+    right: 22px;
+}
+
+.cloud-d {
+    width: 75px;
+    height: 28px;
+    top: 30%;
+    right: 25%;
+}
+.cloud-d::before {
+    width: 35px;
+    height: 35px;
+    top: -18px;
+    left: 10px;
+}
+.cloud-d::after {
+    width: 26px;
+    height: 26px;
+    top: -10px;
+    right: 10px;
+}
+
+/* Floating Shapes */
+.float-shape {
+    position: absolute;
+    z-index: 1;
+}
+
+.shape-tri {
+    top: 28%;
+    left: 9%;
+    width: 22px;
+    height: 22px;
+}
+
+.shape-tri svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.shape-sq {
+    top: 52%;
+    left: -1%;
+    width: 18px;
+    height: 18px;
+    background: #f87171;
+    transform: rotate(12deg);
+    border-radius: 2px;
+    border: 1.5px solid #000;
+}
+
+.shape-diamond {
+    bottom: 22%;
+    right: 7%;
+    width: 20px;
+    height: 20px;
+    background: #2dd4bf;
+    transform: rotate(45deg);
+    border-radius: 3px;
+    border: 1.5px solid #000;
+}
+
+/* Assistant Character */
+.duck-wrapper {
+    position: absolute;
+    top: -55px;
+    right: 50px;
+    z-index: 20;
+}
+
+.duck-bubble {
+    position: absolute;
+    top: -48px;
+    right: -30px;
+    background: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    color: var(--color-text-primary);
+}
+
+.duck-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 22px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #fff;
+}
+
+.duck-svg {
+    width: 82px;
+    height: 82px;
+}

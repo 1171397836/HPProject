@@ -1,0 +1,254 @@
+/* ============================================
+   铁腕 - 组件样式
+   包含：按钮、输入框、徽章、卡片等通用组件
+   ============================================ */
+
+/* 按钮样式 */
+.btn-login {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+
+.btn-login:hover { 
+    color: var(--color-text-primary); 
+}
+
+.btn-primary-nav {
+    background: var(--color-primary);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.btn-primary-nav:hover { 
+    background: #3b82f6; 
+}
+
+.btn-hero-primary {
+    background: var(--color-primary);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-hero-primary:hover {
+    background: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.btn-hero-secondary {
+    background: transparent;
+    color: var(--color-text-primary);
+    padding: 14px 28px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1.5px solid #ccc;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-hero-secondary:hover {
+    border-color: #999;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Demo Window */
+.demo-window {
+    position: relative;
+    z-index: 10;
+    background: var(--color-bg-dark);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-window);
+}
+
+.demo-window-shadow {
+    position: absolute;
+    bottom: -12px;
+    left: 12px;
+    right: -12px;
+    height: 100%;
+    background: var(--color-bg-dark);
+    border-radius: 0;
+    z-index: -1;
+}
+
+/* Demo Titlebar */
+.demo-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    background: var(--color-bg-header);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.demo-titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.demo-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.demo-brand svg { 
+    width: 44px; 
+    height: 44px; 
+}
+
+.demo-brand-badge {
+    font-size: 9.5px;
+    color: var(--color-text-dark-muted);
+    letter-spacing: 0.3px;
+}
+
+.demo-titlebar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.questions-badge {
+    background: var(--color-brand-yellow);
+    color: #000;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.clear-btn {
+    color: var(--color-text-dark-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.clear-btn:hover { 
+    color: #aaa; 
+}
+
+/* Demo Body */
+.demo-body {
+    padding: 18px 20px;
+    background: #fff;
+}
+
+/* Demo Input */
+.demo-input-bar {
+    display: flex;
+    gap: 8px;
+    padding: 12px 14px;
+    background: var(--color-bg-header);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.demo-input-field {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--color-bg-input);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    font-size: 12.5px;
+    font-family: var(--font-family);
+    outline: none;
+}
+
+.demo-input-field::placeholder { 
+    color: #666; 
+}
+
+.demo-send-btn {
+    width: 38px;
+    height: 38px;
+    background: #444;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.demo-send-btn:hover { 
+    background: #555; 
+}
+
+/* Task Type Selector Button */
+.task-type-btn {
+    width: 38px;
+    height: 38px;
+    background: var(--color-brand);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 300;
+    flex-shrink: 0;
+    border: none;
+    transition: all 0.2s;
+}
+.task-type-btn:hover {
+    background: var(--color-brand-dark);
+    transform: scale(1.05);
+}
+
+/* Task Section Label */
+.task-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}

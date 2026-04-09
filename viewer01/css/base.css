@@ -1,0 +1,146 @@
+/* ============================================
+   铁腕 - 基础样式
+   包含：字体、CSS变量、重置样式、滚动条
+   ============================================ */
+
+/* 字体定义 */
+@font-face {
+    font-family: 'Aeonik Mono';
+    src: url(/fonts/AeonikMono/AeonikMono-Regular.woff2) format('woff2'),
+         url(/fonts/AeonikMono/AeonikMono-Regular.woff) format('woff');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+/* CSS 变量 */
+:root {
+    /* 尺寸变量 */
+    --header-mobile: 70px;
+    --header-desktop: 90px;
+    --eyebrow-mobile: 70px;
+    --eyebrow-desktop: 55px;
+
+    /* 主色调 */
+    --color-brand: #f97316;
+    --color-brand-dark: #ea580c;
+    --color-brand-yellow: #facc15;
+
+    /* 背景色 */
+    --color-bg-page: rgb(244, 239, 234);
+    --color-bg-card: #fff;
+    --color-bg-dark: #2d2d2d;
+    --color-bg-header: #222;
+    --color-bg-input: #3a3a3a;
+
+    /* 文字色 */
+    --color-text-primary: #383838;
+    --color-text-secondary: #666;
+    --color-text-muted: #888;
+    --color-text-white: #fff;
+    --color-text-dark-muted: #777;
+
+    /* 功能色 - 艾森豪威尔矩阵 */
+    --color-urgent-important: #dc2626;
+    --color-urgent-important-bg: #fef2f2;
+    --color-not-urgent-important: #16a34a;
+    --color-not-urgent-important-bg: #f0fdf4;
+    --color-urgent-not-important: #d97706;
+    --color-urgent-not-important-bg: #fffbeb;
+    --color-not-urgent-not-important: #64748b;
+    --color-not-urgent-not-important-bg: #f8fafc;
+
+    /* 状态色 */
+    --color-success: #4ade80;
+    --color-pending: #e5e7eb;
+    --color-pending-text: #9ca3af;
+    --color-primary: #60a5fa;
+
+    /* 间距 */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 48px;
+
+    /* 圆角 */
+    --radius-sm: 3px;
+    --radius-md: 4px;
+    --radius-lg: 8px;
+    --radius-xl: 10px;
+
+    /* 阴影 */
+    --shadow-window: 0 30px 60px -15px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* 字体 */
+    --font-family: "Aeonik Mono", sans-serif;
+}
+
+/* 重置样式 */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font-family: var(--font-family);
+    vertical-align: baseline;
+    text-decoration: none;
+}
+
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, textarea, video, button, input {
+    box-sizing: border-box;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    font-size: 100%;
+    font-family: var(--font-family);
+    vertical-align: baseline;
+    text-decoration: none;
+}
+
+/* 滚动行为 */
+@media (min-width: 728px) {
+    * {
+        scroll-margin-top: var(--eyebrow-desktop);
+    }
+}
+
+/* 基础元素 */
+div {
+    display: block;
+    unicode-bidi: isolate;
+}
+
+body {
+    line-height: 1;
+    background-color: var(--color-bg-page);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar { 
+    width: 5px; 
+    height: 5px; 
+}
+
+::-webkit-scrollbar-thumb { 
+    background: rgb(136, 136, 136); 
+}
+
+::-webkit-scrollbar-thumb:hover { 
+    background: rgb(85, 85, 85); 
+}
+
+::-webkit-scrollbar-track { 
+    background: rgb(241, 241, 241); 
+}
+
+/* 工具类 */
+.fJopld { 
+    overflow: hidden; 
+}
