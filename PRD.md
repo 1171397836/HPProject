@@ -1,7 +1,8 @@
 # 铁腕 - 智能任务管理工具 PRD
 
-> 版本: v1.0  
+> 版本: v1.1  
 > 创建日期: 2026-04-10  
+> 更新日期: 2026-04-10  
 > 维护者: SOLO Coder (AI Agent)
 
 ---
@@ -71,9 +72,9 @@
                         │
 ┌───────────────────────▼────────────────────────────────────┐
 │                      后端 (Backend)                         │
-│                    LeanCloud 云服务                         │
+│                 腾讯云开发 CloudBase                        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   用户认证    │  │   数据存储    │  │   静态托管    │      │
+│  │   用户认证    │  │   云数据库    │  │   静态托管    │      │
 │  │  (内建服务)   │  │  (任务数据)   │  │  (前端部署)   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └────────────────────────────────────────────────────────────┘
@@ -84,30 +85,31 @@
 | 层级 | 技术 | 说明 |
 |------|------|------|
 | 前端 | HTML5 + CSS3 + ES6 | 基于现有UI改造 |
-| 后端 | LeanCloud (BaaS) | 国内云服务，中文支持 |
-| 数据库 | LeanCloud 数据存储 | NoSQL，自动同步 |
-| 部署 | LeanCloud 静态托管 | 免费，国内访问快 |
+| 后端 | 腾讯云开发 CloudBase | 国内BaaS服务，Serverless架构 |
+| 数据库 | CloudBase 云数据库 | 文档型数据库，实时同步 |
+| 部署 | CloudBase 静态托管 | 免费额度，国内访问快 |
 
 ### 3.3 数据模型
 
-#### 用户表 (_User)
-LeanCloud 内置用户表，字段：
-- `username`: 用户名（唯一）
+#### 用户集合 (users)
+CloudBase 内置用户认证系统，字段：
+- `_openid`: 用户唯一标识（自动分配）
+- `username`: 用户名（自定义登录时）
 - `password`: 密码（加密存储）
-- `createdAt`: 注册时间
-- `updatedAt`: 更新时间
+- `createTime`: 注册时间
+- `updateTime`: 更新时间
 
-#### 任务表 (Task)
-自定义数据表，字段：
+#### 任务集合 (tasks)
+自定义数据集合，字段：
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | `content` | String | 是 | 任务内容 |
 | `completed` | Boolean | 是 | 是否完成，默认false |
 | `quadrant` | Number | 是 | 象限 1-4 |
-| `user` | Pointer | 是 | 关联用户 |
-| `createdAt` | Date | 自动 | 创建时间 |
-| `updatedAt` | Date | 自动 | 更新时间 |
+| `_openid` | String | 是 | 关联用户ID |
+| `createTime` | Date | 自动 | 创建时间 |
+| `updateTime` | Date | 自动 | 更新时间 |
 
 ---
 
@@ -174,8 +176,8 @@ LeanCloud 内置用户表，字段：
 - 移动端：iOS Safari, Android Chrome
 
 ### 6.3 安全要求
-- 密码加密存储（LeanCloud自动处理）
-- 用户只能访问自己的任务数据
+- 密码加密存储（CloudBase自动处理）
+- 用户只能访问自己的任务数据（通过安全规则控制）
 - 使用 HTTPS 传输
 
 ---
@@ -199,7 +201,7 @@ viewer01/
 │   ├── taskManager.js  # 任务管理
 │   ├── ui.js           # UI交互
 │   ├── auth.js         # 登录认证逻辑（新增）
-│   └── leancloud.js    # LeanCloud SDK配置（新增）
+│   └── cloudbase.js    # CloudBase SDK配置（新增）
 └── PRD.md              # 本文档
 ```
 
@@ -208,28 +210,28 @@ viewer01/
 ## 8. 依赖清单
 
 ### 8.1 外部库
-- LeanCloud JavaScript SDK (v4.x)
+- 腾讯云开发 CloudBase JavaScript SDK (v2.x)
 
 ### 8.2 加载方式
 ```html
-<script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
+<script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/2.9.0/cloudbase.full.js"></script>
 ```
 
 ---
 
 ## 9. 部署方案
 
-### 9.1 LeanCloud 静态托管配置
-1. 在 LeanCloud 控制台创建应用
-2. 进入"存储" → 创建 Class 名为 `Task`
-3. 进入"设置" → "安全中心" → 配置安全域名
-4. 进入"部署" → "静态网站托管" → 上传前端文件
+### 9.1 腾讯云开发 CloudBase 配置
+1. 访问 https://cloud.tencent.com/product/tcb 注册/登录
+2. 创建新环境（选择"个人版"或"免费版"）
+3. 进入"数据库" → 创建集合名为 `tasks`
+4. 配置数据库安全规则（仅允许用户访问自己的数据）
+5. 进入"静态网站托管" → 开启并上传前端文件
 
 ### 9.2 环境变量配置
 前端代码需要配置以下参数（由用户注册后提供）：
-- `APP_ID`: LeanCloud 应用 ID
-- `APP_KEY`: LeanCloud 应用 Key
-- `SERVER_URL`: 服务器地址（国内版一般为 https://xxx.lc-cn-n1-shared.com）
+- `env`: CloudBase 环境 ID
+- 其他配置通过 SDK 自动获取
 
 ---
 
@@ -237,10 +239,10 @@ viewer01/
 
 | 阶段 | 任务 | 负责人 | 状态 |
 |------|------|--------|------|
-| 1 | 用户注册 LeanCloud 并获取配置 | 用户 | 待开始 |
+| 1 | 用户注册腾讯云开发并获取配置 | 用户 | 进行中 |
 | 2 | 创建登录/注册页面 | 工程师Agent | 待开始 |
-| 3 | 对接 LeanCloud 用户认证 | 工程师Agent | 待开始 |
-| 4 | 改造任务管理页面，对接数据存储 | 工程师Agent | 待开始 |
+| 3 | 对接 CloudBase 用户认证 | 工程师Agent | 待开始 |
+| 4 | 改造任务管理页面，对接云数据库 | 工程师Agent | 待开始 |
 | 5 | 测试验证（功能+跨设备同步） | 用户+工程师Agent | 待开始 |
 | 6 | 部署上线 | 工程师Agent | 待开始 |
 
@@ -250,24 +252,40 @@ viewer01/
 
 | 版本 | 日期 | 更新内容 | 更新者 |
 |------|------|---------|--------|
-| v1.0 | 2026-04-10 | 初始版本，确定MVP方案 | SOLO Coder |
+| v1.0 | 2026-04-10 | 初始版本，确定MVP方案，使用 LeanCloud | SOLO Coder |
+| v1.1 | 2026-04-10 | 后端服务从 LeanCloud 切换至腾讯云开发 CloudBase | SOLO Coder |
 
 ---
 
 ## 附录
 
-### A. LeanCloud 注册指引
-1. 访问 https://www.leancloud.cn/
-2. 点击右上角"注册"，使用手机号注册
-3. 登录后点击"创建应用"
-4. 应用名称填写：铁腕任务管理
-5. 进入应用 → "设置" → "应用凭证"，复制 AppID 和 AppKey
+### A. 腾讯云开发 CloudBase 注册指引
+1. 访问 https://cloud.tencent.com/product/tcb
+2. 点击"立即使用"，使用微信或 QQ 登录
+3. 点击"新建环境"，选择"个人版"（新用户可免费试用30天）
+4. 环境名称填写：铁腕任务管理
+5. 创建成功后，在"环境总览"页面获取 **环境 ID**
 
 ### B. 用户操作清单
 | 步骤 | 操作 | 产出物 |
 |------|------|--------|
-| 1 | 注册 LeanCloud 账号 | 账号密码 |
-| 2 | 创建应用 | AppID, AppKey |
-| 3 | 发送配置给 SOLO Coder | 配置信息 |
+| 1 | 注册腾讯云账号 | 账号密码 |
+| 2 | 创建 CloudBase 环境 | 环境 ID |
+| 3 | 发送环境 ID 给 SOLO Coder | 配置信息 |
 | 4 | 等待开发完成 | 可访问的网址 |
 | 5 | 测试使用 | 反馈问题 |
+
+### C. 技术方案变更说明
+**变更原因：** LeanCloud 服务不稳定，切换至腾讯云开发 CloudBase
+
+**变更内容：**
+- 后端服务：LeanCloud → 腾讯云开发 CloudBase
+- SDK：leancloud-storage → cloudbase-js-sdk
+- 用户认证：AV.User → CloudBase 自定义登录
+- 数据存储：AV.Object → CloudBase 云数据库
+
+**变更优势：**
+- 国内访问速度更快（20-40ms）
+- 与微信生态深度整合（可选）
+- Serverless 架构，无需运维
+- 新用户30天免费试用
