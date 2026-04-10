@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁腕 | 智能任务管理</title>
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/matrix.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- 应用页面专用样式 -->
+    <style>
+        /* ============================================
+           铁腕应用页面 - 专用样式
+           ============================================ */
+        
+        /* 应用页面容器 */
+        .app-page {
+            min-height: 100vh;
+            background: var(--color-bg-page);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部应用栏 */
+        .app-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 64px;
+            padding: 0 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--color-bg-page);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        .app-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            text-decoration: none;
+        }
+        
+        .app-header .logo svg {
+            width: 36px;
+            height: 36px;
+        }
+        
+        /* 用户菜单区域 */
+        .app-header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #fff;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-menu:hover {
+            border-color: rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--color-brand);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+        
+        .user-menu-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid var(--color-text-secondary);
+        }
+        
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1.5px solid #ccc;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-logout:hover {
+            border-color: #999;
+            color: var(--color-text-primary);
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        /* 主内容区 */
+        .app-main {
+            flex: 1;
+            padding: 40px 24px 60px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+        }
+        
+        /* 应用容器 */
+        .app-container {
+            position: relative;
+            width: 100%;
+            max-width: 920px;
+        }
+        
+        /* 调整鸭子助手位置 - 在应用页面中 */
+        .app-container .duck-wrapper {
+            position: absolute;
+            top: -50px;
+            right: 40px;
+            z-index: 20;
+        }
+        
+        /* 调整云朵位置 */
+        .app-container .cloud-deco.cloud-d {
+            top: -20px;
+            right: -40px;
+        }
+        
+        /* Demo窗口在应用页面中的调整 */
+        .app-container .demo-window {
+            margin-top: 20px;
+        }
+        
+        /* ============================================
+           响应式适配
+           ============================================ */
+        
+        @media (max-width: 1024px) {
+            .app-header {
+                padding: 0 20px;
+                height: 60px;
+            }
+            
+            .app-header .logo span {
+                display: none;
+            }
+            
+            .app-main {
+                padding: 30px 16px 40px;
+            }
+            
+            .app-container .duck-wrapper {
+                display: none;
+            }
+            
+            .app-container .cloud-deco.cloud-d {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .app-header {
+                padding: 0 16px;
+            }
+            
+            .user-name {
+                display: none;
+            }
+            
+            .btn-logout {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+            
+            .app-main {
+                padding: 20px 12px 30px;
+            }
+            
+            .app-container .demo-window {
+                margin-top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-page">
+        <!-- 顶部应用栏 -->
+        <header class="app-header">
+            <a href="app.html" class="logo">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25 20 L75 20 L80 35 L75 50 L50 55 L25 50 L20 35 Z" fill="#383838"/>
+                    <rect x="30" y="30" width="40" height="25" fill="#f97316"/>
+                    <circle cx="40" cy="42" r="4" fill="#fff"/>
+                    <circle cx="60" cy="42" r="4" fill="#fff"/>
+                    <path d="M45 55 L50 65 L55 55" fill="#facc15"/>
+                    <rect x="35" y="60" width="8" height="15" fill="#383838"/>
+                    <rect x="57" y="60" width="8" height="15" fill="#383838"/>
+                </svg>
+                <span>铁腕</span>
+            </a>
+            <div class="app-header-right">
+                <div class="user-menu" id="userMenu">
+                    <div class="user-avatar">U</div>
+                    <span class="user-name">用户名</span>
+                    <div class="user-menu-arrow"></div>
+                </div>
+                <button class="btn-logout" id="logoutBtn">退出</button>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="app-main">
+            <div class="app-container">
+                <!-- 装饰云朵 -->
+                <div class="cloud-deco cloud-d"></div>
+                
+                <!-- 鸭子助手 -->
+                <div class="duck-wrapper">
+                    <div class="duck-bubble">我是铁腕助手<br>让我帮你安排任务 ↓</div>
+                    <svg class="duck-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="50" cy="62" rx="30" ry="24" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                        <ellipse cx="50" cy="40" rx="24" ry="22" fill="#fff" stroke="#000" stroke-width="1.5"/>
+                        <circle cx="43" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                        <circle cx="57" cy="37" r="3.5" fill="#383838" stroke="#000" stroke-width="0.5"/>
+                        <ellipse cx="50" cy="47" rx="9" ry="6" fill="#f97316" stroke="#000" stroke-width="1"/>
+                        <path d="M29 48 Q18 42 14 50 Q10 56 16 62 Q22 66 30 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                        <path d="M71 48 Q82 42 86 50 Q90 56 84 62 Q78 66 70 60" fill="#fff" stroke="#000" stroke-width="1"/>
+                        <path d="M36 78 L41 92 L46 78" fill="#facc15" stroke="#000" stroke-width="1"/>
+                        <path d="M54 78 L59 92 L64 78" fill="#facc15" stroke="#000" stroke-width="1"/>
+                    </svg>
+                </div>
+
+                <!-- 任务管理主窗口 -->
+                <div class="demo-window">
+                    <!-- 标题栏 -->
+                    <div class="demo-titlebar">
+                        <div class="demo-titlebar-left">
+                            <div class="demo-brand">
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M25 20 L75 20 L80 35 L75 50 L50 55 L25 50 L20 35 Z" fill="#383838"/>
+                                    <rect x="30" y="30" width="40" height="25" fill="#f97316"/>
+                                    <circle cx="40" cy="42" r="4" fill="#fff"/>
+                                    <circle cx="60" cy="42" r="4" fill="#fff"/>
+                                </svg>
+                                铁腕 AI 助手
+                            </div>
+                            <span class="demo-brand-badge">智能任务管理引擎</span>
+                        </div>
+                        <div class="demo-titlebar-right">
+                            <span class="questions-badge">今日剩余 3 个任务</span>
+                            <span class="clear-btn" id="clearBtn">清空</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 主体内容：四象限矩阵 -->
+                    <div class="demo-body">
+                        <div class="task-section-label">任务优先级矩阵</div>
+                        <div class="eisenhower-matrix" id="taskMatrix">
+                            <!-- 第一象限：重要且紧急 -->
+                            <div class="quadrant urgent-important" data-quadrant="urgent-important">
+                                <div class="quadrant-title">
+                                    <div class="priority-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                            <path d="M2 17l10 5 10-5"/>
+                                            <path d="M2 12l10 5 10-5"/>
+                                        </svg>
+                                    </div>
+                                    <span>立即做</span>
+                                </div>
+                                <div class="quadrant-tasks" id="quadrant-1">
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check done">✓</div>
+                                        修复生产环境Bug
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        提交项目截止日期报告
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        回复客户紧急邮件
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 第二象限：重要但不紧急 -->
+                            <div class="quadrant not-urgent-important" data-quadrant="not-urgent-important">
+                                <div class="quadrant-title">
+                                    <div class="priority-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <path d="M12 6v6l4 2"/>
+                                        </svg>
+                                    </div>
+                                    <span>计划做</span>
+                                </div>
+                                <div class="quadrant-tasks" id="quadrant-2">
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check done">✓</div>
+                                        制定季度产品规划
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        学习新技术框架
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        团队技能培训计划
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 第三象限：不重要但紧急 -->
+                            <div class="quadrant urgent-not-important" data-quadrant="urgent-not-important">
+                                <div class="quadrant-title">
+                                    <div class="priority-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                        </svg>
+                                    </div>
+                                    <span>委托做</span>
+                                </div>
+                                <div class="quadrant-tasks" id="quadrant-3">
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check done">✓</div>
+                                        安排会议室预订
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        回复非核心群消息
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        处理日常审批流程
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 第四象限：不重要且不紧急 -->
+                            <div class="quadrant not-urgent-not-important" data-quadrant="not-urgent-not-important">
+                                <div class="quadrant-title">
+                                    <div class="priority-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 6h18"/>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                        </svg>
+                                    </div>
+                                    <span>不做</span>
+                                </div>
+                                <div class="quadrant-tasks" id="quadrant-4">
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check done">✓</div>
+                                        整理旧文件归档
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        浏览技术资讯网站
+                                    </div>
+                                    <div class="matrix-task-item">
+                                        <div class="matrix-task-check pending">○</div>
+                                        社交媒体动态查看
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 输入栏 -->
+                    <div class="demo-input-bar">
+                        <div class="task-type-btn" id="taskTypeBtn" title="选择任务类型">+</div>
+                        <input type="text" class="demo-input-field" id="taskInput" placeholder="添加新任务，例如：下午3点开会...">
+                        <div class="demo-send-btn" id="sendBtn">➤</div>
+                    </div>
+                    
+                    <div class="demo-window-shadow"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript 文件 -->
+    <script src="js/main.js"></script>
+    <script src="js/matrix.js"></script>
+    <script src="js/taskManager.js"></script>
+    <script src="js/ui.js"></script>
+    
+    <!-- 应用页面专用脚本 -->
+    <script>
+        // 用户菜单交互
+        document.getElementById('userMenu').addEventListener('click', function() {
+            // TODO: 显示用户下拉菜单
+            console.log('打开用户菜单');
+        });
+        
+        // 退出登录
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // TODO: 调用 CloudBase 退出登录
+            console.log('退出登录');
+            // window.location.href = 'login.html';
+        });
+        
+        // 清空任务
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            if (confirm('确定要清空所有任务吗？')) {
+                // TODO: 调用清空任务 API
+                console.log('清空任务');
+            }
+        });
+        
+        // 任务类型按钮
+        document.getElementById('taskTypeBtn').addEventListener('click', function() {
+            // TODO: 显示任务类型选择器
+            console.log('选择任务类型');
+        });
+        
+        // 发送按钮
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            const input = document.getElementById('taskInput');
+            const taskText = input.value.trim();
+            if (taskText) {
+                // TODO: 调用添加任务 API
+                console.log('添加任务:', taskText);
+                input.value = '';
+            }
+        });
+        
+        // 回车发送
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendBtn').click();
+            }
+        });
+        
+        // 任务项点击（完成/取消完成）
+        document.querySelectorAll('.matrix-task-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                const check = this.querySelector('.matrix-task-check');
+                if (check.classList.contains('pending')) {
+                    check.classList.remove('pending');
+                    check.classList.add('done');
+                    check.textContent = '✓';
+                } else {
+                    check.classList.remove('done');
+                    check.classList.add('pending');
+                    check.textContent = '○';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
