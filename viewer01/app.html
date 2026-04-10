@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>铁腕 | 智能任务管理</title>
     
+    <!-- CloudBase SDK -->
+    <script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.1.1/cloudbase.full.js"></script>
+    
     <!-- 样式文件 -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -420,19 +423,22 @@
     <script src="js/taskManager.js"></script>
     <script src="js/ui.js"></script>
     
+    <!-- 应用主模块（ES6 模块）-->
+    <script type="module" src="js/app.js"></script>
+    
     <!-- 应用页面专用脚本 -->
     <script>
         // 用户菜单交互
+        // 用户信息（用户名、头像）由 js/app.js 自动从 auth.getCurrentUser() 获取并更新
         document.getElementById('userMenu').addEventListener('click', function() {
             // TODO: 显示用户下拉菜单
             console.log('打开用户菜单');
         });
         
-        // 退出登录
+        // 退出登录功能已移至 app.js 模块处理
+        // 此处保留空事件监听器以防止重复绑定
         document.getElementById('logoutBtn').addEventListener('click', function() {
-            // TODO: 调用 CloudBase 退出登录
-            console.log('退出登录');
-            // window.location.href = 'login.html';
+            // 实际逻辑在 js/app.js 中处理
         });
         
         // 清空任务

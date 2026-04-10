@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 | 铁腕 - 智能任务管理</title>
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- 登录页面专用样式 -->
+    <style>
+        /* ============================================
+           铁腕登录页面 - 专用样式
+           ============================================ */
+        
+        /* 登录页面容器 */
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            background: var(--color-bg-page);
+        }
+        
+        /* 左侧品牌展示区 */
+        .login-brand-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 48px;
+            background: linear-gradient(135deg, var(--color-bg-page) 0%, #f0e9e2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 装饰云朵 - 左侧区域 */
+        .login-brand-section .cloud-deco {
+            position: absolute;
+            opacity: 0.6;
+        }
+        
+        .login-brand-section .cloud-a {
+            top: 12%;
+            left: 8%;
+        }
+        
+        .login-brand-section .cloud-b {
+            top: 50%;
+            left: 2%;
+        }
+        
+        .login-brand-section .cloud-c {
+            bottom: 8%;
+            right: 5%;
+        }
+        
+        /* 品牌内容 */
+        .brand-content {
+            text-align: center;
+            z-index: 2;
+            max-width: 480px;
+        }
+        
+        /* Logo */
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .brand-logo svg {
+            width: 100px;
+            height: 100px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+        }
+        
+        .brand-logo-text {
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            letter-spacing: 4px;
+        }
+        
+        /* 产品描述 */
+        .brand-tagline {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+            line-height: 1.8;
+            margin-bottom: 48px;
+        }
+        
+        /* 功能特点列表 */
+        .brand-features {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-align: left;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-float);
+            border: 1.5px solid #000;
+        }
+        
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            flex-shrink: 0;
+        }
+        
+        .feature-icon.urgent {
+            background: var(--color-urgent-important-bg);
+            color: var(--color-urgent-important);
+        }
+        
+        .feature-icon.plan {
+            background: var(--color-not-urgent-important-bg);
+            color: var(--color-not-urgent-important);
+        }
+        
+        .feature-icon.ai {
+            background: #eff6ff;
+            color: var(--color-primary);
+        }
+        
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .feature-text {
+            flex: 1;
+        }
+        
+        .feature-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .feature-desc {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+        
+        /* 右侧表单区 */
+        .login-form-section {
+            width: 480px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 48px;
+            background: #fff;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+        
+        /* 表单容器 */
+        .form-container {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+        
+        /* 表单标题 */
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* 表单样式 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .form-label .required {
+            color: var(--color-urgent-important);
+        }
+        
+        .form-input-wrapper {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--color-text-primary);
+            background: #fff;
+            transition: all 0.2s;
+            outline: none;
+        }
+        
+        .form-input:hover {
+            border-color: #d1d5db;
+        }
+        
+        .form-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--color-urgent-important);
+            background: var(--color-urgent-important-bg);
+        }
+        
+        .form-input::placeholder {
+            color: var(--color-text-muted);
+        }
+        
+        /* 输入框图标 */
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-muted);
+            pointer-events: none;
+        }
+        
+        .form-input.with-icon {
+            padding-left: 44px;
+        }
+        
+        /* 密码可见性切换 */
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+        
+        .password-toggle:hover {
+            color: var(--color-text-secondary);
+        }
+        
+        /* 错误提示 */
+        .error-message {
+            font-size: 12px;
+            color: var(--color-urgent-important);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 18px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .error-message.show {
+            opacity: 1;
+        }
+        
+        /* 提交按钮 */
+        .btn-submit {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        
+        .btn-submit:hover {
+            background: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-submit:disabled {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* 表单切换链接 */
+        .form-switch {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .form-switch-text {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+        
+        .form-switch-link {
+            color: var(--color-primary);
+            font-weight: 600;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 13px;
+            padding: 0;
+            margin-left: 4px;
+            transition: color 0.2s;
+        }
+        
+        .form-switch-link:hover {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        
+        /* 表单切换动画 */
+        .form-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-panel {
+            transition: all 0.3s ease;
+        }
+        
+        .form-panel.hidden {
+            display: none;
+        }
+        
+        /* 返回首页链接 */
+        .back-home {
+            position: absolute;
+            top: 24px;
+            left: 48px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .back-home:hover {
+            color: var(--color-text-primary);
+        }
+        
+        .back-home svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* ============================================
+           响应式适配
+           ============================================ */
+        
+        @media (max-width: 1024px) {
+            .login-page {
+                flex-direction: column;
+            }
+            
+            .login-brand-section {
+                min-height: auto;
+                padding: 40px 24px;
+            }
+            
+            .brand-logo svg {
+                width: 72px;
+                height: 72px;
+            }
+            
+            .brand-logo-text {
+                font-size: 40px;
+            }
+            
+            .brand-tagline {
+                font-size: 15px;
+                margin-bottom: 32px;
+            }
+            
+            .brand-features {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+            }
+            
+            .feature-item {
+                flex: 1;
+                min-width: 200px;
+                max-width: 280px;
+                padding: 12px 16px;
+            }
+            
+            .feature-desc {
+                display: none;
+            }
+            
+            .login-form-section {
+                width: 100%;
+                min-height: auto;
+                padding: 40px 24px;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.05);
+            }
+            
+            .back-home {
+                left: 24px;
+                top: 16px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .login-brand-section {
+                padding: 32px 20px;
+            }
+            
+            .brand-logo {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .brand-logo svg {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .brand-logo-text {
+                font-size: 32px;
+            }
+            
+            .brand-tagline {
+                font-size: 14px;
+                margin-bottom: 24px;
+            }
+            
+            .brand-features {
+                display: none;
+            }
+            
+            .login-form-section {
+                padding: 32px 20px;
+            }
+            
+            .form-header {
+                margin-bottom: 32px;
+            }
+            
+            .form-title {
+                font-size: 24px;
+            }
+            
+            .back-home {
+                position: static;
+                margin-bottom: 24px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page">
+        <!-- 左侧品牌展示区 -->
+        <section class="login-brand-section">
+            <!-- 装饰云朵 -->
+            <div class="cloud-deco cloud-a"></div>
+            <div class="cloud-deco cloud-b"></div>
+            <div class="cloud-deco cloud-c"></div>
+            
+            <!-- 品牌内容 -->
+            <div class="brand-content">
+                <!-- Logo -->
+                <div class="brand-logo">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M25 20 L75 20 L80 35 L75 50 L50 55 L25 50 L20 35 Z" fill="#383838"/>
+                        <rect x="30" y="30" width="40" height="25" fill="#f97316"/>
+                        <circle cx="40" cy="42" r="4" fill="#fff"/>
+                        <circle cx="60" cy="42" r="4" fill="#fff"/>
+                        <path d="M45 55 L50 65 L55 55" fill="#facc15"/>
+                        <rect x="35" y="60" width="8" height="15" fill="#383838"/>
+                        <rect x="57" y="60" width="8" height="15" fill="#383838"/>
+                    </svg>
+                    <span class="brand-logo-text">铁腕</span>
+                </div>
+                
+                <!-- 产品描述 -->
+                <p class="brand-tagline">
+                    智能任务管理工具<br>
+                    基于艾森豪威尔矩阵，帮你高效规划每一天
+                </p>
+                
+                <!-- 功能特点 -->
+                <div class="brand-features">
+                    <div class="feature-item">
+                        <div class="feature-icon urgent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">四象限管理</div>
+                            <div class="feature-desc">重要紧急任务一目了然</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon plan">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">智能规划</div>
+                            <div class="feature-desc">科学安排任务优先级</div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <div class="feature-icon ai">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                                <path d="M9 12h6"/>
+                                <path d="M9 16h6"/>
+                            </svg>
+                        </div>
+                        <div class="feature-text">
+                            <div class="feature-title">AI 助手</div>
+                            <div class="feature-desc">智能分析任务建议</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 右侧表单区 -->
+        <section class="login-form-section">
+            <!-- 返回首页 -->
+            <a href="index.html" class="back-home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5"/>
+                    <path d="M12 19l-7-7 7-7"/>
+                </svg>
+                返回首页
+            </a>
+            
+            <div class="form-container">
+                <!-- 登录表单 -->
+                <div class="form-panel" id="loginPanel">
+                    <div class="form-header">
+                        <h1 class="form-title">欢迎回来</h1>
+                        <p class="form-subtitle">登录你的铁腕账号</p>
+                    </div>
+                    
+                    <form class="login-form" id="loginForm">
+                        <div class="form-group">
+                            <label class="form-label">
+                                用户名 <span class="required">*</span>
+                            </label>
+                            <div class="form-input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <input 
+                                    type="text" 
+                                    class="form-input with-icon" 
+                                    id="loginUsername"
+                                    name="username"
+                                    placeholder="请输入用户名"
+                                    autocomplete="username"
+                                >
+                            </div>
+                            <span class="error-message" id="loginUsernameError">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                请输入用户名
+                            </span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                密码 <span class="required">*</span>
+                            </label>
+                            <div class="form-input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input 
+                                    type="password" 
+                                    class="form-input with-icon" 
+                                    id="loginPassword"
+                                    name="password"
+                                    placeholder="请输入密码"
+                                    autocomplete="current-password"
+                                >
+                                <button type="button" class="password-toggle" id="toggleLoginPassword" title="显示/隐藏密码">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="error-message" id="loginPasswordError">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                密码长度至少6位
+                            </span>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit" id="loginBtn">登 录</button>
+                    </form>
+                    
+                    <div class="form-switch">
+                        <span class="form-switch-text">还没有账号？</span>
+                        <button type="button" class="form-switch-link" id="showRegister">立即注册</button>
+                    </div>
+                </div>
+                
+                <!-- 注册表单 -->
+                <div class="form-panel hidden" id="registerPanel">
+                    <div class="form-header">
+                        <h1 class="form-title">创建账号</h1>
+                        <p class="form-subtitle">开始你的高效任务管理之旅</p>
+                    </div>
+                    
+                    <form class="login-form" id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label">
+                                用户名 <span class="required">*</span>
+                            </label>
+                            <div class="form-input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <input 
+                                    type="text" 
+                                    class="form-input with-icon" 
+                                    id="registerUsername"
+                                    name="username"
+                                    placeholder="请输入用户名"
+                                    autocomplete="username"
+                                >
+                            </div>
+                            <span class="error-message" id="registerUsernameError">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                请输入用户名
+                            </span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                密码 <span class="required">*</span>
+                            </label>
+                            <div class="form-input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input 
+                                    type="password" 
+                                    class="form-input with-icon" 
+                                    id="registerPassword"
+                                    name="password"
+                                    placeholder="请输入密码（至少6位）"
+                                    autocomplete="new-password"
+                                >
+                                <button type="button" class="password-toggle" id="toggleRegisterPassword" title="显示/隐藏密码">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="error-message" id="registerPasswordError">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                密码长度至少6位
+                            </span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                确认密码 <span class="required">*</span>
+                            </label>
+                            <div class="form-input-wrapper">
+                                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                                <input 
+                                    type="password" 
+                                    class="form-input with-icon" 
+                                    id="registerConfirmPassword"
+                                    name="confirmPassword"
+                                    placeholder="请再次输入密码"
+                                    autocomplete="new-password"
+                                >
+                                <button type="button" class="password-toggle" id="toggleConfirmPassword" title="显示/隐藏密码">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="error-message" id="registerConfirmError">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
+                                两次输入的密码不一致
+                            </span>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit" id="registerBtn">注 册</button>
+                    </form>
+                    
+                    <div class="form-switch">
+                        <span class="form-switch-text">已有账号？</span>
+                        <button type="button" class="form-switch-link" id="showLogin">立即登录</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 登录页面脚本 -->
+    <script>
+        // ============================================
+        // 铁腕登录页面 - 交互脚本
+        // ============================================
+        
+        // DOM 元素
+        const loginPanel = document.getElementById('loginPanel');
+        const registerPanel = document.getElementById('registerPanel');
+        const showRegisterBtn = document.getElementById('showRegister');
+        const showLoginBtn = document.getElementById('showLogin');
+        
+        // 表单元素
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        
+        // 登录表单字段
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        
+        // 注册表单字段
+        const registerUsername = document.getElementById('registerUsername');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+        
+        // 密码可见性切换
+        const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+        const toggleRegisterPassword = document.getElementById('toggleRegisterPassword');
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+        
+        // ============================================
+        // 表单切换功能
+        // ============================================
+        
+        // 显示注册表单
+        showRegisterBtn.addEventListener('click', function() {
+            loginPanel.classList.add('hidden');
+            registerPanel.classList.remove('hidden');
+            // 清空登录表单
+            clearFormErrors(loginForm);
+            loginForm.reset();
+        });
+        
+        // 显示登录表单
+        showLoginBtn.addEventListener('click', function() {
+            registerPanel.classList.add('hidden');
+            loginPanel.classList.remove('hidden');
+            // 清空注册表单
+            clearFormErrors(registerForm);
+            registerForm.reset();
+        });
+        
+        // ============================================
+        // 密码可见性切换
+        // ============================================
+        
+        function togglePasswordVisibility(input, button) {
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            
+            // 切换图标
+            const isVisible = type === 'text';
+            button.innerHTML = isVisible 
+                ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                     <line x1="1" y1="1" x2="23" y2="23"/>
+                   </svg>`
+                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                     <circle cx="12" cy="12" r="3"/>
+                   </svg>`;
+        }
+        
+        toggleLoginPassword.addEventListener('click', () => togglePasswordVisibility(loginPassword, toggleLoginPassword));
+        toggleRegisterPassword.addEventListener('click', () => togglePasswordVisibility(registerPassword, toggleRegisterPassword));
+        toggleConfirmPassword.addEventListener('click', () => togglePasswordVisibility(registerConfirmPassword, toggleConfirmPassword));
+        
+        // ============================================
+        // 表单验证工具函数
+        // ============================================
+        
+        // 显示错误
+        function showError(input, errorId) {
+            input.classList.add('error');
+            document.getElementById(errorId).classList.add('show');
+        }
+        
+        // 隐藏错误
+        function hideError(input, errorId) {
+            input.classList.remove('error');
+            document.getElementById(errorId).classList.remove('show');
+        }
+        
+        // 清空表单错误
+        function clearFormErrors(form) {
+            form.querySelectorAll('.form-input').forEach(input => {
+                input.classList.remove('error');
+            });
+            form.querySelectorAll('.error-message').forEach(error => {
+                error.classList.remove('show');
+            });
+        }
+        
+        // 验证用户名
+        function validateUsername(username) {
+            return username.trim().length > 0;
+        }
+        
+        // 验证密码长度
+        function validatePassword(password) {
+            return password.length >= 6;
+        }
+        
+        // ============================================
+        // 登录表单验证与提交
+        // ============================================
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 清空之前的错误
+            hideError(loginUsername, 'loginUsernameError');
+            hideError(loginPassword, 'loginPasswordError');
+            
+            let isValid = true;
+            
+            // 验证用户名
+            if (!validateUsername(loginUsername.value)) {
+                showError(loginUsername, 'loginUsernameError');
+                isValid = false;
+            }
+            
+            // 验证密码
+            if (!validatePassword(loginPassword.value)) {
+                showError(loginPassword, 'loginPasswordError');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // TODO: 调用 CloudBase 登录 API
+                console.log('登录:', {
+                    username: loginUsername.value.trim(),
+                    password: loginPassword.value
+                });
+                
+                // 模拟登录成功，跳转到应用页面
+                // 实际集成时，这里应该调用 auth.js 中的登录函数
+                alert('登录成功！');
+                window.location.href = 'app.html';
+            }
+        });
+        
+        // 实时验证 - 登录用户名
+        loginUsername.addEventListener('input', function() {
+            if (this.classList.contains('error') && validateUsername(this.value)) {
+                hideError(this, 'loginUsernameError');
+            }
+        });
+        
+        // 实时验证 - 登录密码
+        loginPassword.addEventListener('input', function() {
+            if (this.classList.contains('error') && validatePassword(this.value)) {
+                hideError(this, 'loginPasswordError');
+            }
+        });
+        
+        // ============================================
+        // 注册表单验证与提交
+        // ============================================
+        
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 清空之前的错误
+            hideError(registerUsername, 'registerUsernameError');
+            hideError(registerPassword, 'registerPasswordError');
+            hideError(registerConfirmPassword, 'registerConfirmError');
+            
+            let isValid = true;
+            
+            // 验证用户名
+            if (!validateUsername(registerUsername.value)) {
+                showError(registerUsername, 'registerUsernameError');
+                isValid = false;
+            }
+            
+            // 验证密码
+            if (!validatePassword(registerPassword.value)) {
+                showError(registerPassword, 'registerPasswordError');
+                isValid = false;
+            }
+            
+            // 验证确认密码
+            if (registerPassword.value !== registerConfirmPassword.value) {
+                showError(registerConfirmPassword, 'registerConfirmError');
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // TODO: 调用 CloudBase 注册 API
+                console.log('注册:', {
+                    username: registerUsername.value.trim(),
+                    password: registerPassword.value
+                });
+                
+                // 模拟注册成功，切换到登录页面
+                // 实际集成时，这里应该调用 auth.js 中的注册函数
+                alert('注册成功！请登录');
+                registerPanel.classList.add('hidden');
+                loginPanel.classList.remove('hidden');
+                registerForm.reset();
+            }
+        });
+        
+        // 实时验证 - 注册用户名
+        registerUsername.addEventListener('input', function() {
+            if (this.classList.contains('error') && validateUsername(this.value)) {
+                hideError(this, 'registerUsernameError');
+            }
+        });
+        
+        // 实时验证 - 注册密码
+        registerPassword.addEventListener('input', function() {
+            if (this.classList.contains('error') && validatePassword(this.value)) {
+                hideError(this, 'registerPasswordError');
+            }
+            // 同时验证确认密码
+            if (registerConfirmPassword.value && registerPassword.value === registerConfirmPassword.value) {
+                hideError(registerConfirmPassword, 'registerConfirmError');
+            }
+        });
+        
+        // 实时验证 - 确认密码
+        registerConfirmPassword.addEventListener('input', function() {
+            if (this.classList.contains('error') && registerPassword.value === this.value) {
+                hideError(this, 'registerConfirmError');
+            }
+        });
+        
+        // ============================================
+        // 回车键提交
+        // ============================================
+        
+        // 登录表单回车提交
+        loginForm.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+        
+        // 注册表单回车提交
+        registerForm.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    registerForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
