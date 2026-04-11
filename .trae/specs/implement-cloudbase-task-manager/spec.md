@@ -5,15 +5,22 @@
 
 ## What Changes
 - 创建登录/注册页面 (login.html)
+- 新增登录页模块脚本 (js/login.js)
 - 集成 CloudBase JavaScript SDK
 - 实现用户认证系统（用户名+密码）
 - 实现任务数据的云端存储和同步
+- 为本地开发/测试提供 localStorage 回退模式
 - 改造 app.html 添加登录状态检查
 
 ## Impact
-- 新增文件: login.html, cloudbase.js, auth.js
-- 修改文件: app.html（添加认证检查）
+- 新增文件: login.html, js/login.js, js/cloudbase.js, js/auth.js
+- 修改文件: app.html, js/app.js
 - 依赖: CloudBase 环境 ID ironhand-8gclol9h5c79d816
+
+## Current Status
+- 本地功能测试已完成：注册、登录、退出、四象限新增、完成/取消完成、编辑、删除、清空已完成
+- 本地预览默认使用 localStorage 作为认证与任务数据回退模式
+- CloudBase 真环境联调、线上托管与跨设备同步仍待验证
 
 ## ADDED Requirements
 
@@ -34,6 +41,19 @@
 - **GIVEN** 已登录用户
 - **WHEN** 点击退出按钮
 - **THEN** 清除登录状态并跳转到登录页
+
+### Requirement: 本地开发测试模式
+系统应在本地开发或预览环境提供可用的认证与任务存储回退模式，以便不依赖 CloudBase 真环境也能进行功能测试。
+
+#### Scenario: 本地认证回退
+- **GIVEN** 用户在本地开发环境访问应用
+- **WHEN** CloudBase 真环境未接通或不适合本地域名访问
+- **THEN** 系统使用 localStorage 完成注册、登录、退出和会话校验
+
+#### Scenario: 本地任务存储回退
+- **GIVEN** 用户已在本地开发环境登录
+- **WHEN** 进行新增、编辑、完成、删除、清空已完成等任务操作
+- **THEN** 系统使用 localStorage 保存并读取该用户的任务数据
 
 ### Requirement: 任务数据云端存储
 系统应将任务数据存储在 CloudBase 云数据库中。
@@ -80,18 +100,20 @@ app.html 应添加用户认证相关功能。
 ## Data Model
 
 ### 用户集合 (users)
-- `_openid`: 用户唯一标识（CloudBase 自动分配）
+- `uid`: 本地模式用户唯一标识
+- `_openid`: CloudBase 模式用户唯一标识（CloudBase 自动分配）
 - `username`: 用户名
-- `password`: 密码（加密存储）
-- `createTime`: 注册时间
+- `password`: 密码（本地测试模式为本地存储，线上应加密存储）
+- `createTime` / `createdAt`: 注册时间
 
 ### 任务集合 (tasks)
+- `_id`: 任务唯一标识
 - `content`: 任务内容 (String)
 - `completed`: 是否完成 (Boolean, 默认 false)
-- `quadrant`: 象限 1-4 (Number)
-- `_openid`: 关联用户ID (String)
-- `createTime`: 创建时间 (Date)
-- `updateTime`: 更新时间 (Date)
+- `quadrant`: 象限编码 q1-q4 (String)
+- `uid` / `_openid`: 关联用户 ID (String)
+- `createTime` / `createdAt`: 创建时间
+- `updateTime` / `updatedAt`: 更新时间
 
 ## Security Rules
 ```javascript

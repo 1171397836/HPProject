@@ -52,13 +52,20 @@
 
 ## Phase 5: 测试验证
 
-- [ ] Task 8: 功能测试
-  - [ ] SubTask 8.1: 测试注册新账号
-  - [ ] SubTask 8.2: 测试登录功能
-  - [ ] SubTask 8.3: 测试添加任务到各象限
-  - [ ] SubTask 8.4: 测试完成任务
-  - [ ] SubTask 8.5: 测试删除任务
-  - [ ] SubTask 8.6: 测试跨设备数据同步
+- [x] Task 8: 本地功能测试
+  - [x] SubTask 8.1: 测试注册新账号
+  - [x] SubTask 8.2: 测试登录功能
+  - [x] SubTask 8.3: 测试添加任务到四象限
+  - [x] SubTask 8.4: 测试完成/取消完成任务
+  - [x] SubTask 8.5: 测试编辑任务
+  - [x] SubTask 8.6: 测试删除任务
+  - [x] SubTask 8.7: 测试清空已完成任务
+  - [x] SubTask 8.8: 测试退出登录
+
+- [ ] Task 9: 云端与跨设备验证
+  - [ ] SubTask 9.1: 测试 CloudBase 真环境注册/登录
+  - [ ] SubTask 9.2: 测试 CloudBase 云端任务增删改查
+  - [ ] SubTask 9.3: 测试跨设备数据同步
 
 # Task Dependencies
 
@@ -67,12 +74,14 @@
 - Task 4 依赖 Task 3（需要认证逻辑）
 - Task 5 依赖 Task 4（需要页面改造）
 - Task 7 依赖 Task 5 和 Task 6（需要代码和配置都完成）
-- Task 8 依赖 Task 7（需要部署完成）
+- Task 8 依赖 Task 5（本地功能测试可先于线上部署执行）
+- Task 9 依赖 Task 7（需要完成真实 CloudBase 配置和部署）
 
 # Parallel Tasks
 
 - Task 1 和 Task 6 可以并行执行
 - Task 2 和 Task 3 可以并行执行（部分工作）
+- Task 8 和 Task 6 可以并行执行（本地功能验证不依赖线上环境）
 
 # 已完成的工作总结
 
@@ -83,10 +92,21 @@
 4. ✅ js/auth.js - 用户认证逻辑
 5. ✅ js/app.js - 任务管理应用逻辑
 
+## 已完成的本地验证
+1. ✅ 注册
+2. ✅ 登录
+3. ✅ 退出
+4. ✅ 四象限新增任务
+5. ✅ 完成/取消完成任务
+6. ✅ 编辑任务
+7. ✅ 删除任务
+8. ✅ 清空已完成任务
+
 ## 待用户执行的工作
 1. ⏳ 运行 cloudbase-setup.js 配置 CloudBase 控制台
 2. ⏳ 运行 npm run deploy 部署到线上
-3. ⏳ 功能测试验证
+3. ⏳ 验证 CloudBase 真环境注册/登录与数据同步
+4. ⏳ 验证跨设备数据同步
 
 # 下一步操作
 

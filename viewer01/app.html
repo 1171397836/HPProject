@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>铁腕 | 智能任务管理</title>
     
-    <!-- CloudBase SDK -->
-    <script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.1.1/cloudbase.full.js"></script>
+    <!-- CloudBase SDK - 使用官方 CDN 最新版本 -->
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
     
     <!-- 样式文件 -->
     <link rel="stylesheet" href="css/base.css">
@@ -214,6 +214,62 @@
                 margin-top: 0;
             }
         }
+
+        .quadrant.quadrant-selected {
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+
+        .matrix-task-item {
+            align-items: flex-start;
+        }
+
+        .matrix-task-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .matrix-task-text {
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .matrix-task-meta {
+            margin-top: 4px;
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .matrix-task-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .matrix-action-btn {
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            background: #fff;
+            border-radius: 6px;
+            font-size: 10px;
+            line-height: 1;
+            padding: 4px 6px;
+            cursor: pointer;
+        }
+
+        .matrix-task-item.is-completed .matrix-task-text {
+            text-decoration: line-through;
+            color: var(--color-text-muted);
+        }
+
+        .matrix-task-empty {
+            padding: 10px;
+            border: 1px dashed rgba(0, 0, 0, 0.12);
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            color: var(--color-text-muted);
+            background: rgba(255, 255, 255, 0.55);
+        }
     </style>
 </head>
 <body>
@@ -234,8 +290,8 @@
             </a>
             <div class="app-header-right">
                 <div class="user-menu" id="userMenu">
-                    <div class="user-avatar">U</div>
-                    <span class="user-name">用户名</span>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span class="user-name" id="userName">用户名</span>
                     <div class="user-menu-arrow"></div>
                 </div>
                 <button class="btn-logout" id="logoutBtn">退出</button>
@@ -281,8 +337,8 @@
                             <span class="demo-brand-badge">智能任务管理引擎</span>
                         </div>
                         <div class="demo-titlebar-right">
-                            <span class="questions-badge">今日剩余 3 个任务</span>
-                            <span class="clear-btn" id="clearBtn">清空</span>
+                            <span class="questions-badge" id="questionsBadge">今日剩余 0 个任务</span>
+                            <span class="clear-btn" id="clearBtn">清空已完成</span>
                         </div>
                     </div>
                     
@@ -291,7 +347,7 @@
                         <div class="task-section-label">任务优先级矩阵</div>
                         <div class="eisenhower-matrix" id="taskMatrix">
                             <!-- 第一象限：重要且紧急 -->
-                            <div class="quadrant urgent-important" data-quadrant="urgent-important">
+                            <div class="quadrant urgent-important" data-quadrant="q1">
                                 <div class="quadrant-title">
                                     <div class="priority-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -302,24 +358,11 @@
                                     </div>
                                     <span>立即做</span>
                                 </div>
-                                <div class="quadrant-tasks" id="quadrant-1">
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check done">✓</div>
-                                        修复生产环境Bug
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        提交项目截止日期报告
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        回复客户紧急邮件
-                                    </div>
-                                </div>
+                                <div class="quadrant-tasks" id="quadrant-1"></div>
                             </div>
 
                             <!-- 第二象限：重要但不紧急 -->
-                            <div class="quadrant not-urgent-important" data-quadrant="not-urgent-important">
+                            <div class="quadrant not-urgent-important" data-quadrant="q2">
                                 <div class="quadrant-title">
                                     <div class="priority-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -329,24 +372,11 @@
                                     </div>
                                     <span>计划做</span>
                                 </div>
-                                <div class="quadrant-tasks" id="quadrant-2">
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check done">✓</div>
-                                        制定季度产品规划
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        学习新技术框架
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        团队技能培训计划
-                                    </div>
-                                </div>
+                                <div class="quadrant-tasks" id="quadrant-2"></div>
                             </div>
 
                             <!-- 第三象限：不重要但紧急 -->
-                            <div class="quadrant urgent-not-important" data-quadrant="urgent-not-important">
+                            <div class="quadrant urgent-not-important" data-quadrant="q3">
                                 <div class="quadrant-title">
                                     <div class="priority-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -358,24 +388,11 @@
                                     </div>
                                     <span>委托做</span>
                                 </div>
-                                <div class="quadrant-tasks" id="quadrant-3">
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check done">✓</div>
-                                        安排会议室预订
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        回复非核心群消息
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        处理日常审批流程
-                                    </div>
-                                </div>
+                                <div class="quadrant-tasks" id="quadrant-3"></div>
                             </div>
 
                             <!-- 第四象限：不重要且不紧急 -->
-                            <div class="quadrant not-urgent-not-important" data-quadrant="not-urgent-not-important">
+                            <div class="quadrant not-urgent-not-important" data-quadrant="q4">
                                 <div class="quadrant-title">
                                     <div class="priority-icon">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -386,29 +403,16 @@
                                     </div>
                                     <span>不做</span>
                                 </div>
-                                <div class="quadrant-tasks" id="quadrant-4">
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check done">✓</div>
-                                        整理旧文件归档
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        浏览技术资讯网站
-                                    </div>
-                                    <div class="matrix-task-item">
-                                        <div class="matrix-task-check pending">○</div>
-                                        社交媒体动态查看
-                                    </div>
-                                </div>
+                                <div class="quadrant-tasks" id="quadrant-4"></div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- 输入栏 -->
                     <div class="demo-input-bar">
-                        <div class="task-type-btn" id="taskTypeBtn" title="选择任务类型">+</div>
+                        <button class="task-type-btn" id="taskTypeBtn" title="选择任务类型" type="button">Q1</button>
                         <input type="text" class="demo-input-field" id="taskInput" placeholder="添加新任务，例如：下午3点开会...">
-                        <div class="demo-send-btn" id="sendBtn">➤</div>
+                        <button class="demo-send-btn" id="sendBtn" type="button">➤</button>
                     </div>
                     
                     <div class="demo-window-shadow"></div>
@@ -417,77 +421,6 @@
         </main>
     </div>
 
-    <!-- JavaScript 文件 -->
-    <script src="js/main.js"></script>
-    <script src="js/matrix.js"></script>
-    <script src="js/taskManager.js"></script>
-    <script src="js/ui.js"></script>
-    
-    <!-- 应用主模块（ES6 模块）-->
     <script type="module" src="js/app.js"></script>
-    
-    <!-- 应用页面专用脚本 -->
-    <script>
-        // 用户菜单交互
-        // 用户信息（用户名、头像）由 js/app.js 自动从 auth.getCurrentUser() 获取并更新
-        document.getElementById('userMenu').addEventListener('click', function() {
-            // TODO: 显示用户下拉菜单
-            console.log('打开用户菜单');
-        });
-        
-        // 退出登录功能已移至 app.js 模块处理
-        // 此处保留空事件监听器以防止重复绑定
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            // 实际逻辑在 js/app.js 中处理
-        });
-        
-        // 清空任务
-        document.getElementById('clearBtn').addEventListener('click', function() {
-            if (confirm('确定要清空所有任务吗？')) {
-                // TODO: 调用清空任务 API
-                console.log('清空任务');
-            }
-        });
-        
-        // 任务类型按钮
-        document.getElementById('taskTypeBtn').addEventListener('click', function() {
-            // TODO: 显示任务类型选择器
-            console.log('选择任务类型');
-        });
-        
-        // 发送按钮
-        document.getElementById('sendBtn').addEventListener('click', function() {
-            const input = document.getElementById('taskInput');
-            const taskText = input.value.trim();
-            if (taskText) {
-                // TODO: 调用添加任务 API
-                console.log('添加任务:', taskText);
-                input.value = '';
-            }
-        });
-        
-        // 回车发送
-        document.getElementById('taskInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('sendBtn').click();
-            }
-        });
-        
-        // 任务项点击（完成/取消完成）
-        document.querySelectorAll('.matrix-task-item').forEach(function(item) {
-            item.addEventListener('click', function(e) {
-                const check = this.querySelector('.matrix-task-check');
-                if (check.classList.contains('pending')) {
-                    check.classList.remove('pending');
-                    check.classList.add('done');
-                    check.textContent = '✓';
-                } else {
-                    check.classList.remove('done');
-                    check.classList.add('pending');
-                    check.textContent = '○';
-                }
-            });
-        });
-    </script>
 </body>
 </html>
