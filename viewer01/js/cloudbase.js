@@ -8,6 +8,7 @@ import { CLOUDBASE_ENV, getCurrentUser, shouldUseLocalAuth } from './auth.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
 const STORAGE_KEY_TASKS = 'tiewan_tasks_db';
+const MAX_TASK_LENGTH = 200;
 const VALID_QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 
 const ERROR_MESSAGES = {
@@ -107,6 +108,42 @@ function readTasks() {
 
 function writeTasks(tasks) {
   safeStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
+}
+
+function validateTaskContent(content) {
+  const normalizedContent = typeof content === 'string' ? content.trim() : '';
+
+  if (!normalizedContent) {
+    return {
+      valid: false,
+      normalizedContent,
+      error: {
+        code: 'PARAM_ERROR',
+        message: '请输入任务内容',
+        originalError: null,
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
+  if (normalizedContent.length > MAX_TASK_LENGTH) {
+    return {
+      valid: false,
+      normalizedContent,
+      error: {
+        code: 'PARAM_ERROR',
+        message: `任务内容不能超过${MAX_TASK_LENGTH}个字符`,
+        originalError: null,
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
+  return {
+    valid: true,
+    normalizedContent,
+    error: null
+  };
 }
 
 function normalizeTask(task) {
@@ -286,8 +323,9 @@ const taskDB = {
   },
 
   async addTask(content, quadrant) {
-    if (!content || typeof content !== 'string' || !content.trim()) {
-      return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '任务内容不能为空') };
+    const contentValidation = validateTaskContent(content);
+    if (!contentValidation.valid) {
+      return { success: false, data: null, error: contentValidation.error };
     }
 
     if (!VALID_QUADRANTS.includes(quadrant)) {
@@ -300,7 +338,7 @@ const taskDB = {
     }
 
     if (shouldUseLocalTaskMode()) {
-      return localTaskAdapter.addTask(authState.user, content, quadrant);
+      return localTaskAdapter.addTask(authState.user, contentValidation.normalizedContent, quadrant);
     }
 
     try {
@@ -308,11 +346,11 @@ const taskDB = {
       const cloudUser = getCloudAuthUser();
 
       if (!db || !cloudUser) {
-        return localTaskAdapter.addTask(authState.user, content, quadrant);
+        return localTaskAdapter.addTask(authState.user, contentValidation.normalizedContent, quadrant);
       }
 
       const taskData = {
-        content: content.trim(),
+        content: contentValidation.normalizedContent,
         quadrant,
         completed: false,
         createdAt: new Date().toISOString(),
@@ -355,8 +393,12 @@ const taskDB = {
       return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '任务ID不能为空') };
     }
 
-    if (updateData.content !== undefined && !String(updateData.content).trim()) {
-      return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '任务内容不能为空') };
+    let contentValidation = null;
+    if (updateData.content !== undefined) {
+      contentValidation = validateTaskContent(updateData.content);
+      if (!contentValidation.valid) {
+        return { success: false, data: null, error: contentValidation.error };
+      }
     }
 
     if (updateData.quadrant !== undefined && !VALID_QUADRANTS.includes(updateData.quadrant)) {
@@ -372,8 +414,8 @@ const taskDB = {
       ...updateData
     };
 
-    if (sanitizedUpdates.content !== undefined) {
-      sanitizedUpdates.content = String(sanitizedUpdates.content).trim();
+    if (contentValidation) {
+      sanitizedUpdates.content = contentValidation.normalizedContent;
     }
 
     if (shouldUseLocalTaskMode()) {
@@ -494,13 +536,15 @@ const auth = {
 
 export {
   ERROR_MESSAGES,
+  MAX_TASK_LENGTH,
   auth,
   cloudbase,
   getCloudBase,
   handleError,
   initCloudBase,
   shouldUseLocalTaskMode,
-  taskDB
+  taskDB,
+  validateTaskContent
 };
 
 export default {

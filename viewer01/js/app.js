@@ -5,11 +5,11 @@
  * - 直接渲染四象限矩阵
  */
 
-import { initCloudBase, taskDB } from './cloudbase.js';
+import { initCloudBase, MAX_TASK_LENGTH, taskDB, validateTaskContent } from './cloudbase.js';
 import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
+import { createDialogContent, openStackedDialog } from './dialog.js';
 
 const STORAGE_KEY_QUADRANT = 'tiewan_current_quadrant';
-const MAX_TASK_LENGTH = 200;
 
 const QUADRANT_CONFIG = {
   q1: { containerId: 'quadrant-1', label: '立即做', fullName: '重要且紧急', shortCode: 'Q1' },
@@ -69,6 +69,17 @@ function getTaskStats() {
     completed: currentTasks.filter(task => task.completed).length,
     pending: currentTasks.filter(task => !task.completed).length
   };
+}
+
+function validateTaskInput(content) {
+  const validation = validateTaskContent(content);
+
+  if (!validation.valid) {
+    showError(validation.error?.message || '任务内容不合法');
+    return null;
+  }
+
+  return validation.normalizedContent;
 }
 
 async function initApp() {
@@ -170,9 +181,9 @@ function createTaskElement(task) {
     toggleTask(task._id, !task.completed);
   });
 
-  editButton.addEventListener('click', event => {
+  editButton.addEventListener('click', async event => {
     event.stopPropagation();
-    editTask(task._id);
+    await editTask(task._id);
   });
 
   deleteButton.addEventListener('click', async event => {
@@ -183,16 +194,197 @@ function createTaskElement(task) {
   return taskElement;
 }
 
-async function addTask(content, quadrant = currentQuadrant) {
-  const trimmedContent = String(content || '').trim();
+function createTaskEditDialogContent(task, close) {
+  return createDialogContent(`
+    <form class="task-dialog-form">
+      <label class="task-dialog-label" for="taskEditContent">任务内容</label>
+      <textarea
+        id="taskEditContent"
+        class="task-dialog-input"
+        rows="4"
+        maxlength="${MAX_TASK_LENGTH}"
+        placeholder="请输入任务内容"
+      ></textarea>
+      <label class="task-dialog-label" for="taskEditQuadrant">任务象限</label>
+      <select id="taskEditQuadrant" class="task-dialog-select">
+        ${Object.entries(QUADRANT_CONFIG).map(([value, config]) => `<option value="${value}">${config.shortCode} · ${config.label}</option>`).join('')}
+      </select>
+      <div class="task-dialog-error" data-role="error" aria-live="polite"></div>
+      <div class="task-dialog-actions">
+        <button type="button" class="task-dialog-btn secondary" data-role="cancel">取消</button>
+        <button type="submit" class="task-dialog-btn primary">保存</button>
+      </div>
+    </form>
+  `, element => {
+    const form = element;
+    const content = element.querySelector('#taskEditContent');
+    const quadrant = element.querySelector('#taskEditQuadrant');
+    const error = element.querySelector('[data-role="error"]');
+    const cancelButton = element.querySelector('[data-role="cancel"]');
 
-  if (!trimmedContent) {
-    showError('请输入任务内容');
-    return false;
+    content.value = task.content || '';
+    quadrant.value = QUADRANT_CONFIG[task.quadrant] ? task.quadrant : currentQuadrant;
+    error.textContent = '';
+
+    const handleCancel = () => {
+      close({ cancelled: true });
+    };
+
+    const handleSubmit = event => {
+      event.preventDefault();
+
+      const nextContent = content.value.trim();
+      const nextQuadrant = quadrant.value.trim().toLowerCase();
+      const validation = validateTaskContent(nextContent);
+
+      if (!validation.valid) {
+        error.textContent = validation.error?.message || '任务内容不合法';
+        content.focus();
+        return;
+      }
+
+      if (!QUADRANT_CONFIG[nextQuadrant]) {
+        error.textContent = '象限编号必须是 q1 / q2 / q3 / q4';
+        quadrant.focus();
+        return;
+      }
+
+      close({
+        cancelled: false,
+        content: validation.normalizedContent,
+        quadrant: nextQuadrant
+      });
+    };
+
+    cancelButton.addEventListener('click', handleCancel);
+    form.addEventListener('submit', handleSubmit);
+
+    return {
+      cleanup: () => {
+        cancelButton.removeEventListener('click', handleCancel);
+        form.removeEventListener('submit', handleSubmit);
+      },
+      focusTarget: content
+    };
+  });
+}
+
+function openTaskEditDialog(task) {
+  return openStackedDialog({
+    title: '编辑任务',
+    render: ({ body, close }) => {
+      const content = createTaskEditDialogContent(task, close);
+      body.appendChild(content.element);
+      return {
+        cleanup: content.cleanup,
+        focusTarget: content.focusTarget
+      };
+    }
+  });
+}
+
+function openConfirmDialog(options = {}) {
+  const {
+    title = '操作确认',
+    message = '确定继续此操作吗？',
+    confirmText = '确定',
+    cancelText = '取消',
+    confirmButtonVariant = 'primary'
+  } = options;
+
+  return openStackedDialog({
+    title,
+    panelClassName: 'is-compact',
+    render: ({ body, close }) => {
+      const content = createDialogContent(`
+        <div class="task-dialog-confirm">
+          <p class="task-dialog-message">${escapeHtml(message)}</p>
+          <div class="task-dialog-actions">
+            <button type="button" class="task-dialog-btn secondary" data-role="cancel">${escapeHtml(cancelText)}</button>
+            <button type="button" class="task-dialog-btn ${escapeHtml(confirmButtonVariant)}" data-role="confirm">${escapeHtml(confirmText)}</button>
+          </div>
+        </div>
+      `, element => {
+        const cancelButton = element.querySelector('[data-role="cancel"]');
+        const confirmButton = element.querySelector('[data-role="confirm"]');
+        const handleCancel = () => {
+          close({ cancelled: true });
+        };
+        const handleConfirm = () => {
+          close({ cancelled: false, confirmed: true });
+        };
+
+        cancelButton.addEventListener('click', handleCancel);
+        confirmButton.addEventListener('click', handleConfirm);
+
+        return {
+          cleanup: () => {
+            cancelButton.removeEventListener('click', handleCancel);
+            confirmButton.removeEventListener('click', handleConfirm);
+          },
+          focusTarget: confirmButton
+        };
+      });
+
+      body.appendChild(content.element);
+
+      return {
+        cleanup: content.cleanup,
+        focusTarget: content.focusTarget
+      };
+    }
+  });
+}
+
+function collectTaskEditInput(task, options = {}) {
+  const {
+    promptFn = typeof window !== 'undefined' && typeof window.prompt === 'function'
+      ? window.prompt.bind(window)
+      : null
+  } = options;
+
+  if (typeof document !== 'undefined' && !options.forcePrompt) {
+    return openTaskEditDialog(task);
   }
 
-  if (trimmedContent.length > MAX_TASK_LENGTH) {
-    showError(`任务内容不能超过${MAX_TASK_LENGTH}个字符`);
+  if (typeof promptFn !== 'function') {
+    return Promise.resolve({
+      cancelled: true,
+      error: new Error('当前环境不支持任务编辑输入')
+    });
+  }
+
+  const nextContent = promptFn('编辑任务内容', task.content);
+  if (nextContent === null) {
+    return Promise.resolve({ cancelled: true });
+  }
+
+  const trimmedContent = validateTaskInput(nextContent);
+  if (!trimmedContent) {
+    return Promise.resolve({ cancelled: true, invalid: true });
+  }
+
+  const nextQuadrant = promptFn('输入象限编号（q1/q2/q3/q4）', task.quadrant);
+  if (nextQuadrant === null) {
+    return Promise.resolve({ cancelled: true });
+  }
+
+  const normalizedQuadrant = nextQuadrant.trim().toLowerCase();
+  if (!QUADRANT_CONFIG[normalizedQuadrant]) {
+    showError('象限编号必须是 q1 / q2 / q3 / q4');
+    return Promise.resolve({ cancelled: true, invalid: true });
+  }
+
+  return Promise.resolve({
+    cancelled: false,
+    content: trimmedContent,
+    quadrant: normalizedQuadrant
+  });
+}
+
+async function addTask(content, quadrant = currentQuadrant) {
+  const trimmedContent = validateTaskInput(content);
+  if (!trimmedContent) {
     return false;
   }
 
@@ -242,66 +434,59 @@ async function toggleTask(taskId, completed) {
   return true;
 }
 
-async function editTask(taskId) {
+async function editTask(taskId, options = {}) {
   const task = currentTasks.find(item => item._id === taskId);
   if (!task) {
     showError('任务不存在');
     return false;
   }
 
-  const nextContent = window.prompt('编辑任务内容', task.content);
-  if (nextContent === null) {
+  try {
+    const editResult = await collectTaskEditInput(task, options);
+    if (!editResult || editResult.cancelled) {
+      return false;
+    }
+
+    const result = await taskDB.updateTaskContent(taskId, {
+      content: editResult.content,
+      quadrant: editResult.quadrant
+    });
+
+    if (!result.success) {
+      showError(result.error?.message || '更新任务失败');
+      return false;
+    }
+
+    currentTasks = currentTasks.map(item => (
+      item._id === taskId
+        ? {
+            ...item,
+            content: editResult.content,
+            quadrant: editResult.quadrant,
+            updatedAt: result.data?.updatedAt || new Date().toISOString()
+          }
+        : item
+    ));
+
+    renderTaskMatrix();
+    updateHeaderStats();
+    showSuccess('任务已更新');
+    return true;
+  } catch (error) {
+    console.error('[App] 编辑任务失败', error);
+    showError('编辑任务失败，请稍后重试');
     return false;
   }
-
-  const trimmedContent = nextContent.trim();
-  if (!trimmedContent) {
-    showError('任务内容不能为空');
-    return false;
-  }
-
-  const nextQuadrant = window.prompt('输入象限编号（q1/q2/q3/q4）', task.quadrant);
-  if (nextQuadrant === null) {
-    return false;
-  }
-
-  const normalizedQuadrant = nextQuadrant.trim().toLowerCase();
-  if (!QUADRANT_CONFIG[normalizedQuadrant]) {
-    showError('象限编号必须是 q1 / q2 / q3 / q4');
-    return false;
-  }
-
-  const result = await taskDB.updateTaskContent(taskId, {
-    content: trimmedContent,
-    quadrant: normalizedQuadrant
-  });
-
-  if (!result.success) {
-    showError(result.error?.message || '更新任务失败');
-    return false;
-  }
-
-  currentTasks = currentTasks.map(item => (
-    item._id === taskId
-      ? {
-          ...item,
-          content: trimmedContent,
-          quadrant: normalizedQuadrant,
-          updatedAt: result.data?.updatedAt || new Date().toISOString()
-        }
-      : item
-  ));
-
-  renderTaskMatrix();
-  updateHeaderStats();
-  showSuccess('任务已更新');
-  return true;
 }
 
 async function runConfirmedAction(options = {}) {
   const {
     message = '确定继续此操作吗？',
-    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    title = '操作确认',
+    confirmText = '确定',
+    cancelText = '取消',
+    confirmButtonVariant = 'primary',
+    confirmFn = null,
     actionFn = async () => ({ success: true }),
     beforeAction,
     afterAction,
@@ -314,7 +499,24 @@ async function runConfirmedAction(options = {}) {
     return guardResult;
   }
 
-  const confirmed = await Promise.resolve(confirmFn(message));
+  let confirmed = false;
+  if (typeof confirmFn === 'function') {
+    confirmed = await Promise.resolve(confirmFn(message));
+  } else if (typeof document !== 'undefined') {
+    const dialogResult = await openConfirmDialog({
+      title,
+      message,
+      confirmText,
+      cancelText,
+      confirmButtonVariant
+    });
+    confirmed = dialogResult?.confirmed === true;
+  } else {
+    const fallbackConfirm = typeof window !== 'undefined' && typeof window.confirm === 'function'
+      ? window.confirm.bind(window)
+      : () => true;
+    confirmed = await Promise.resolve(fallbackConfirm(message));
+  }
 
   if (!confirmed) {
     return {
@@ -336,12 +538,15 @@ async function confirmBeforeDeleteTask(options = {}) {
   const {
     taskId,
     message = '确定删除这个任务吗？',
-    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    confirmFn = null,
     deleteFn = taskDB.deleteTask.bind(taskDB)
   } = options;
 
   return runConfirmedAction({
+    title: '删除任务',
     message,
+    confirmText: '删除',
+    confirmButtonVariant: 'danger',
     confirmFn,
     actionFn: () => deleteFn(taskId)
   });
@@ -385,9 +590,11 @@ async function clearCompleted() {
     return false;
   }
 
-  currentTasks = currentTasks.filter(task => !task.completed);
-  renderTaskMatrix();
-  updateHeaderStats();
+  const reloaded = await loadTasks();
+  if (!reloaded) {
+    return false;
+  }
+
   showSuccess(`已清空 ${result.deletedCount} 个任务`);
   return true;
 }
@@ -486,13 +693,15 @@ function bindEventListeners() {
 async function confirmBeforeLogout(options = {}) {
   const {
     message = '确定要退出登录吗？',
-    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    confirmFn = null,
     logoutFn = handleLogout,
     triggerElement = null
   } = options;
 
   return runConfirmedAction({
+    title: '退出确认',
     message,
+    confirmText: '退出',
     confirmFn,
     actionFn: logoutFn,
     guard: () => {
@@ -526,7 +735,7 @@ async function confirmBeforeClearCompleted(options = {}) {
   const {
     completedCount = 0,
     message = `确定清空 ${completedCount} 个已完成任务吗？`,
-    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    confirmFn = null,
     clearFn = async () => {
       showLoading(true);
 
@@ -539,7 +748,10 @@ async function confirmBeforeClearCompleted(options = {}) {
   } = options;
 
   return runConfirmedAction({
+    title: '清空已完成',
     message,
+    confirmText: '清空',
+    confirmButtonVariant: 'danger',
     confirmFn,
     actionFn: clearFn
   });
@@ -634,6 +846,7 @@ if (typeof document !== 'undefined') {
 export {
   QUADRANT_CONFIG,
   addTask,
+  collectTaskEditInput,
   confirmBeforeClearCompleted,
   confirmBeforeDeleteTask,
   confirmBeforeLogout,

@@ -2,9 +2,9 @@
   "name": "viewer01",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "login.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/smoke-test.mjs"
   },
   "keywords": [],
   "author": "",

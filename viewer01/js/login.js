@@ -2,6 +2,7 @@ import {
   checkAuthStatusSync,
   handleLogin,
   handleRegister,
+  navigateTo,
   validatePassword,
   validatePasswordMatch,
   validateUsername
@@ -224,7 +225,7 @@ function bindEvents(elements) {
 function initLoginPage() {
   const currentUser = checkAuthStatusSync();
   if (currentUser) {
-    window.location.href = 'app.html';
+    navigateTo('app.html');
     return;
   }
 

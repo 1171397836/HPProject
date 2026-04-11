@@ -14,6 +14,7 @@
     background: none;
     border: none;
     font-family: inherit;
+    text-decoration: none;
 }
 
 .btn-login:hover { 
@@ -33,6 +34,7 @@
     border: none;
     font-family: inherit;
     transition: background 0.2s;
+    text-decoration: none;
 }
 
 .btn-primary-nav:hover { 
@@ -55,6 +57,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    text-decoration: none;
 }
 
 .btn-hero-primary:hover {
