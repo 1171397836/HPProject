@@ -22,6 +22,7 @@ let currentTasks = [];
 let currentQuadrant = 'q1';
 let currentUser = null;
 let isLoading = false;
+let isLogoutSubmitting = false;
 
 function getSafeStorage() {
   try {
@@ -174,9 +175,9 @@ function createTaskElement(task) {
     editTask(task._id);
   });
 
-  deleteButton.addEventListener('click', event => {
+  deleteButton.addEventListener('click', async event => {
     event.stopPropagation();
-    deleteTask(task._id);
+    await deleteTask(task._id);
   });
 
   return taskElement;
@@ -297,12 +298,61 @@ async function editTask(taskId) {
   return true;
 }
 
-async function deleteTask(taskId) {
-  if (!window.confirm('确定删除这个任务吗？')) {
-    return false;
+async function runConfirmedAction(options = {}) {
+  const {
+    message = '确定继续此操作吗？',
+    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    actionFn = async () => ({ success: true }),
+    beforeAction,
+    afterAction,
+    guard
+  } = options;
+
+  const guardResult = typeof guard === 'function' ? await Promise.resolve(guard()) : null;
+
+  if (guardResult) {
+    return guardResult;
   }
 
-  const result = await taskDB.deleteTask(taskId);
+  const confirmed = await Promise.resolve(confirmFn(message));
+
+  if (!confirmed) {
+    return {
+      success: false,
+      cancelled: true
+    };
+  }
+
+  await Promise.resolve(beforeAction?.());
+
+  try {
+    return await actionFn();
+  } finally {
+    await Promise.resolve(afterAction?.());
+  }
+}
+
+async function confirmBeforeDeleteTask(options = {}) {
+  const {
+    taskId,
+    message = '确定删除这个任务吗？',
+    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    deleteFn = taskDB.deleteTask.bind(taskDB)
+  } = options;
+
+  return runConfirmedAction({
+    message,
+    confirmFn,
+    actionFn: () => deleteFn(taskId)
+  });
+}
+
+async function deleteTask(taskId) {
+  const result = await confirmBeforeDeleteTask({ taskId });
+
+  if (result?.cancelled) {
+    return false;
+  }
 
   if (!result.success) {
     showError(result.error?.message || '删除任务失败');
@@ -324,28 +374,22 @@ async function clearCompleted() {
     return true;
   }
 
-  if (!window.confirm(`确定清空 ${completedCount} 个已完成任务吗？`)) {
+  const result = await confirmBeforeClearCompleted({ completedCount });
+
+  if (result?.cancelled) {
     return false;
   }
 
-  showLoading(true);
-
-  try {
-    const result = await taskDB.clearCompleted();
-
-    if (!result.success) {
-      showError(result.error?.message || '清空已完成任务失败');
-      return false;
-    }
-
-    currentTasks = currentTasks.filter(task => !task.completed);
-    renderTaskMatrix();
-    updateHeaderStats();
-    showSuccess(`已清空 ${result.deletedCount} 个任务`);
-    return true;
-  } finally {
-    showLoading(false);
+  if (!result.success) {
+    showError(result.error?.message || '清空已完成任务失败');
+    return false;
   }
+
+  currentTasks = currentTasks.filter(task => !task.completed);
+  renderTaskMatrix();
+  updateHeaderStats();
+  showSuccess(`已清空 ${result.deletedCount} 个任务`);
+  return true;
 }
 
 function setCurrentQuadrant(quadrant) {
@@ -422,10 +466,8 @@ function bindEventListeners() {
   });
 
   document.getElementById('clearBtn')?.addEventListener('click', clearCompleted);
-  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-    if (window.confirm('确定要退出登录吗？')) {
-      await handleLogout();
-    }
+  document.getElementById('logoutBtn')?.addEventListener('click', async event => {
+    await confirmBeforeLogout({ triggerElement: event.currentTarget });
   });
 
   document.querySelectorAll('.quadrant').forEach(element => {
@@ -438,6 +480,68 @@ function bindEventListeners() {
     if (!document.hidden && currentUser) {
       loadTasks();
     }
+  });
+}
+
+async function confirmBeforeLogout(options = {}) {
+  const {
+    message = '确定要退出登录吗？',
+    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    logoutFn = handleLogout,
+    triggerElement = null
+  } = options;
+
+  return runConfirmedAction({
+    message,
+    confirmFn,
+    actionFn: logoutFn,
+    guard: () => {
+      if (!isLogoutSubmitting) {
+        return null;
+      }
+
+      return {
+        success: false,
+        ignored: true
+      };
+    },
+    beforeAction: () => {
+      isLogoutSubmitting = true;
+
+      if (triggerElement) {
+        triggerElement.disabled = true;
+      }
+    },
+    afterAction: () => {
+      isLogoutSubmitting = false;
+
+      if (triggerElement) {
+        triggerElement.disabled = false;
+      }
+    }
+  });
+}
+
+async function confirmBeforeClearCompleted(options = {}) {
+  const {
+    completedCount = 0,
+    message = `确定清空 ${completedCount} 个已完成任务吗？`,
+    confirmFn = typeof window !== 'undefined' ? window.confirm.bind(window) : () => true,
+    clearFn = async () => {
+      showLoading(true);
+
+      try {
+        return await taskDB.clearCompleted();
+      } finally {
+        showLoading(false);
+      }
+    }
+  } = options;
+
+  return runConfirmedAction({
+    message,
+    confirmFn,
+    actionFn: clearFn
   });
 }
 
@@ -530,6 +634,9 @@ if (typeof document !== 'undefined') {
 export {
   QUADRANT_CONFIG,
   addTask,
+  confirmBeforeClearCompleted,
+  confirmBeforeDeleteTask,
+  confirmBeforeLogout,
   clearCompleted,
   currentQuadrant,
   currentTasks,
@@ -539,6 +646,7 @@ export {
   groupTasksByQuadrant,
   initApp,
   loadTasks,
+  runConfirmedAction,
   showToast,
   toggleTask
 };

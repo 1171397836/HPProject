@@ -44,7 +44,13 @@ const {
 } = authModule;
 
 const { taskDB } = cloudbaseModule;
-const { groupTasksByQuadrant } = appModule;
+const {
+  confirmBeforeClearCompleted,
+  confirmBeforeDeleteTask,
+  confirmBeforeLogout,
+  groupTasksByQuadrant,
+  runConfirmedAction
+} = appModule;
 
 localStorage.clear();
 
@@ -80,19 +86,121 @@ const grouped = groupTasksByQuadrant(listAfterUpdate.data);
 assert(grouped.q1.some(task => task._id === task1.data._id && task.completed), 'Q1 完成任务未保留');
 assert(grouped.q4.some(task => task._id === task2.data._id && task.content === '整理下周迭代计划'), '任务未移动到 Q4');
 
-const clearResult = await taskDB.clearCompleted();
-assert(clearResult.success && clearResult.deletedCount === 1, '清空已完成失败');
+let sharedConfirmMessage = '';
+let sharedActionTriggered = false;
+const sharedCancelResult = await runConfirmedAction({
+  message: '确认执行通用操作吗？',
+  confirmFn(message) {
+    sharedConfirmMessage = message;
+    return false;
+  },
+  async actionFn() {
+    sharedActionTriggered = true;
+    return { success: true };
+  }
+});
 
-const deleteResult = await taskDB.deleteTask(task3.data._id);
-assert(deleteResult.success, '删除任务失败');
+assert(sharedConfirmMessage === '确认执行通用操作吗？', '通用确认文案不正确');
+assert(sharedCancelResult.cancelled === true, '通用确认取消时未返回取消状态');
+assert(sharedActionTriggered === false, '通用确认取消后仍触发了实际操作');
+
+let clearConfirmMessage = '';
+let clearTriggered = false;
+const cancelClearResult = await confirmBeforeClearCompleted({
+  completedCount: 1,
+  confirmFn(message) {
+    clearConfirmMessage = message;
+    return false;
+  },
+  async clearFn() {
+    clearTriggered = true;
+    return { success: true, deletedCount: 1 };
+  }
+});
+
+assert(clearConfirmMessage === '确定清空 1 个已完成任务吗？', '清空确认文案不正确');
+assert(cancelClearResult.cancelled === true, '取消清空时未返回取消状态');
+assert(clearTriggered === false, '取消清空后仍触发了清空逻辑');
+
+const clearResult = await confirmBeforeClearCompleted({
+  completedCount: 1,
+  confirmFn() {
+    return true;
+  },
+  async clearFn() {
+    clearTriggered = true;
+    return taskDB.clearCompleted();
+  }
+});
+assert(clearResult.success && clearResult.deletedCount === 1, '确认清空已完成失败');
+
+let deleteConfirmMessage = '';
+let deleteTriggered = false;
+const cancelDeleteResult = await confirmBeforeDeleteTask({
+  taskId: task3.data._id,
+  confirmFn(message) {
+    deleteConfirmMessage = message;
+    return false;
+  },
+  async deleteFn() {
+    deleteTriggered = true;
+    return { success: true };
+  }
+});
+
+assert(deleteConfirmMessage === '确定删除这个任务吗？', '删除确认文案不正确');
+assert(cancelDeleteResult.cancelled === true, '取消删除时未返回取消状态');
+assert(deleteTriggered === false, '取消删除后仍触发了删除逻辑');
+
+const deleteResult = await confirmBeforeDeleteTask({
+  taskId: task3.data._id,
+  confirmFn() {
+    return true;
+  },
+  async deleteFn(taskId) {
+    deleteTriggered = true;
+    return taskDB.deleteTask(taskId);
+  }
+});
+assert(deleteResult.success, '确认后删除任务失败');
 
 const finalList = await taskDB.getTasks();
 assert(finalList.data.length === 1, '最终任务数量不正确');
 assert(finalList.data[0]._id === task2.data._id, '最终保留任务不正确');
 
+let confirmMessage = '';
+let logoutTriggered = false;
+const cancelLogoutResult = await confirmBeforeLogout({
+  confirmFn(message) {
+    confirmMessage = message;
+    return false;
+  },
+  async logoutFn() {
+    logoutTriggered = true;
+    return { success: true };
+  }
+});
+
+assert(confirmMessage === '确定要退出登录吗？', '退出确认文案不正确');
+assert(cancelLogoutResult.cancelled === true, '取消退出时未返回取消状态');
+assert(logoutTriggered === false, '取消退出后仍触发了退出逻辑');
+
+const confirmLogoutResult = await confirmBeforeLogout({
+  confirmFn() {
+    return true;
+  },
+  async logoutFn() {
+    logoutTriggered = true;
+    return { success: true, mocked: true };
+  }
+});
+
+assert(confirmLogoutResult.success === true, '确认退出后未执行退出逻辑');
+assert(logoutTriggered === true, '确认退出后未触发退出逻辑');
+
 const logoutResult = await handleLogout({ skipRedirect: true });
 assert(logoutResult.success, '退出登录失败');
 assert(checkAuthStatusSync() === null, '退出后登录态未清理');
 
-console.log('Smoke test passed: auth + task CRUD + quadrant grouping + logout all verified.');
+console.log('Smoke test passed: auth + task CRUD + shared confirm flow + quadrant grouping all verified.');
 
