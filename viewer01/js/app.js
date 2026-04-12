@@ -3,11 +3,34 @@
  * - 与 login 共用 auth.js / storage.js
  * - 本地模式支持注册登录后直接增删改查
  * - 直接渲染四象限矩阵
+ * - 新增 AI 助手功能
  */
 
 import { MAX_TASK_LENGTH, taskDB, validateTaskContent } from './storage.js';
-import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
+import { handleLogout, requireAuth, updateUserDisplay, getCurrentUser } from './auth.js';
 import { createDialogContent, openStackedDialog } from './dialog.js';
+import {
+  AI_PROVIDERS,
+  getAIConfig,
+  getProviderDefaultModel,
+  getProviderModels,
+  isAIConfigReady,
+  saveAIConfig,
+  validateAIConfig
+} from './aiConfig.js';
+import {
+  addMessage,
+  clearChatHistory,
+  createNewSession,
+  switchSession,
+  getCurrentSession,
+  getMessages,
+  getWelcomeMessage,
+  initChat,
+  MESSAGE_TYPE,
+  sendMessage,
+  setCallbacks
+} from './aiChat.js';
 import CONFIG from './config.js';
 
 const STORAGE_KEY_QUADRANT = CONFIG.STORAGE_KEYS.CURRENT_QUADRANT;
@@ -25,6 +48,10 @@ let currentUser = null;
 let isLoading = false;
 let isLogoutSubmitting = false;
 
+// AI 模式状态
+let isAIMode = false;
+let isAIInitialized = false;
+
 function getSafeStorage() {
   try {
     return window.localStorage;
@@ -33,9 +60,17 @@ function getSafeStorage() {
   }
 }
 
+function getQuadrantStorageKey() {
+  const user = currentUser || getCurrentUser();
+  if (user && user.uid) {
+    return `${STORAGE_KEY_QUADRANT}_${user.uid}`;
+  }
+  return STORAGE_KEY_QUADRANT;
+}
+
 function restoreQuadrantSelection() {
   const storage = getSafeStorage();
-  const savedQuadrant = storage?.getItem(STORAGE_KEY_QUADRANT);
+  const savedQuadrant = storage?.getItem(getQuadrantStorageKey());
 
   if (savedQuadrant && QUADRANT_CONFIG[savedQuadrant]) {
     currentQuadrant = savedQuadrant;
@@ -44,7 +79,7 @@ function restoreQuadrantSelection() {
 
 function saveQuadrantSelection() {
   const storage = getSafeStorage();
-  storage?.setItem(STORAGE_KEY_QUADRANT, currentQuadrant);
+  storage?.setItem(getQuadrantStorageKey(), currentQuadrant);
 }
 
 function groupTasksByQuadrant(tasks) {
@@ -90,8 +125,421 @@ async function initApp() {
   restoreQuadrantSelection();
   updateUserDisplay('userName', 'userAvatar');
   bindEventListeners();
+  bindAIEventListeners();
   updateQuadrantSelectorUI();
   await loadTasks();
+
+  // 初始化 AI 聊天
+  initAIChat();
+}
+
+// ==================== AI 助手功能 ====================
+
+/**
+ * 初始化 AI 聊天
+ */
+function initAIChat() {
+  if (isAIInitialized) return;
+
+  initChat({
+    onMessageUpdate: (message, allMessages) => {
+      renderAIChatMessages(allMessages);
+    },
+    onSessionUpdate: (sessions, currentSessionId) => {
+      renderAIChatSessions(sessions, currentSessionId);
+    },
+    onError: (error) => {
+      showError('AI 响应出错: ' + error.message);
+    }
+  });
+
+  isAIInitialized = true;
+}
+
+/**
+ * 渲染 AI 会话列表
+ */
+function renderAIChatSessions(sessions, currentSessionId) {
+  const container = document.getElementById('aiChatSessionList');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!sessions || sessions.length === 0) {
+    return;
+  }
+
+  sessions.forEach(session => {
+    const item = document.createElement('div');
+    item.className = `ai-chat-session-item ${session.id === currentSessionId ? 'active' : ''}`;
+    item.dataset.sessionId = session.id;
+    
+    item.innerHTML = `
+      <div class="ai-chat-session-title">${escapeHtml(session.title || '新对话')}</div>
+      <div class="ai-chat-session-date">${formatTime(session.updatedAt)}</div>
+    `;
+
+    item.addEventListener('click', () => {
+      if (session.id !== currentSessionId) {
+        switchSession(session.id);
+      }
+    });
+
+    container.appendChild(item);
+  });
+}
+
+/**
+ * 切换 AI 模式
+ */
+function toggleAIMode() {
+  isAIMode = !isAIMode;
+
+  const aiBtn = document.getElementById('aiAssistantBtn');
+  const taskMatrixContainer = document.getElementById('taskMatrixContainer');
+  const aiChatContainer = document.getElementById('aiChatContainer');
+  const inputBar = document.querySelector('.demo-input-bar');
+  const taskInput = document.getElementById('taskInput');
+
+  if (isAIMode) {
+    // 切换到 AI 模式
+    aiBtn.classList.add('active');
+    taskMatrixContainer.classList.add('slide-out');
+
+    setTimeout(() => {
+      aiChatContainer.hidden = false;
+      // 强制重绘以触发过渡动画
+      void aiChatContainer.offsetHeight;
+      aiChatContainer.classList.add('show');
+    }, 100);
+
+    inputBar.classList.add('ai-mode');
+    taskInput.placeholder = '和 AI 助手对话...';
+
+    // 检查配置
+    if (!isAIConfigReady()) {
+      // 显示欢迎消息和配置提示
+      renderAIChatMessages([{
+        id: 'welcome',
+        type: MESSAGE_TYPE.SYSTEM,
+        content: getWelcomeMessage() + '\n\n⚠️ 你还没有配置 AI 服务。点击左侧菜单中的"AI 设置"来配置你的 API Key。',
+        timestamp: Date.now()
+      }]);
+    } else {
+      // 显示欢迎消息
+      const session = getCurrentSession();
+      if (!session || session.messages.length === 0) {
+        addMessage(MESSAGE_TYPE.SYSTEM, getWelcomeMessage());
+      } else {
+        renderAIChatMessages(session.messages);
+      }
+    }
+
+    taskInput.focus();
+  } else {
+    // 切换回任务模式
+    aiBtn.classList.remove('active');
+    aiChatContainer.classList.remove('show');
+
+    setTimeout(() => {
+      aiChatContainer.hidden = true;
+      taskMatrixContainer.classList.remove('slide-out');
+    }, 300);
+
+    inputBar.classList.remove('ai-mode');
+    updateQuadrantSelectorUI();
+  }
+}
+
+/**
+ * 渲染 AI 聊天消息
+ */
+function renderAIChatMessages(messages) {
+  const container = document.getElementById('aiChatMessages');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  messages.forEach(msg => {
+    const msgEl = document.createElement('div');
+    msgEl.className = `ai-message ${msg.type}`;
+
+    let avatarText = '';
+    if (msg.type === MESSAGE_TYPE.USER) {
+      avatarText = currentUser?.username?.charAt(0).toUpperCase() || 'U';
+    } else if (msg.type === MESSAGE_TYPE.AI) {
+      avatarText = 'AI';
+    } else if (msg.type === MESSAGE_TYPE.SYSTEM) {
+      avatarText = '⚡';
+    } else if (msg.type === MESSAGE_TYPE.ERROR) {
+      avatarText = '!';
+    }
+
+    msgEl.innerHTML = `
+      <div class="ai-message-avatar">${avatarText}</div>
+      <div class="ai-message-content">${escapeHtml(msg.content)}</div>
+    `;
+
+    container.appendChild(msgEl);
+  });
+
+  // 滚动到底部
+  container.scrollTop = container.scrollHeight;
+}
+
+/**
+ * 发送 AI 消息
+ */
+async function sendAIMessage() {
+  const input = document.getElementById('taskInput');
+  const content = input?.value?.trim();
+
+  if (!content) return;
+
+  // 检查配置
+  if (!isAIConfigReady()) {
+    showError('请先配置 AI 服务，点击左侧菜单中的"AI 设置"');
+    return;
+  }
+
+  // 清空输入框
+  input.value = '';
+
+  // 显示打字指示器
+  showAITypingIndicator();
+
+  // 发送消息
+  const result = await sendMessage(content, currentTasks);
+
+  // 移除打字指示器
+  hideAITypingIndicator();
+
+  if (!result.success) {
+    showError(result.error || '发送失败');
+  }
+}
+
+/**
+ * 显示 AI 打字指示器
+ */
+function showAITypingIndicator() {
+  const container = document.getElementById('aiChatMessages');
+  if (!container) return;
+
+  const indicator = document.createElement('div');
+  indicator.className = 'ai-message ai typing-indicator-container';
+  indicator.id = 'aiTypingIndicator';
+  indicator.innerHTML = `
+    <div class="ai-message-avatar">AI</div>
+    <div class="ai-message-content">
+      <div class="ai-typing-indicator">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(indicator);
+  container.scrollTop = container.scrollHeight;
+}
+
+/**
+ * 隐藏 AI 打字指示器
+ */
+function hideAITypingIndicator() {
+  const indicator = document.getElementById('aiTypingIndicator');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+/**
+ * 打开 AI 设置弹窗
+ */
+async function openAISettingsDialog() {
+  const config = getAIConfig();
+
+  return openStackedDialog({
+    title: 'AI 设置',
+    panelClassName: '',
+    render: ({ body, close }) => {
+      const providerOptions = Object.entries(AI_PROVIDERS).map(([key, p]) =>
+        `<option value="${key}" ${config.provider === key ? 'selected' : ''}>${p.name}</option>`
+      ).join('');
+
+      const modelOptions = config.provider === 'custom'
+        ? `<option value="">自定义模型</option>`
+        : getProviderModels(config.provider).map(m =>
+            `<option value="${m.id}" ${config.model === m.id ? 'selected' : ''}>${m.name}</option>`
+          ).join('');
+
+      const content = createDialogContent(`
+        <form class="ai-settings-form" id="aiSettingsForm">
+          <div class="ai-settings-field">
+            <label class="ai-settings-label" for="aiProvider">LLM 提供商</label>
+            <select class="ai-settings-select" id="aiProvider">
+              ${providerOptions}
+            </select>
+          </div>
+
+          <div class="ai-settings-field" id="customApiBaseField" ${config.provider !== 'custom' ? 'style="display:none"' : ''}>
+            <label class="ai-settings-label" for="aiCustomApiBase">自定义 API 地址</label>
+            <input type="text" class="ai-settings-input" id="aiCustomApiBase"
+              placeholder="https://api.example.com/v1"
+              value="${escapeHtml(config.customApiBase || '')}">
+          </div>
+
+          <div class="ai-settings-field" id="modelField" ${config.provider === 'custom' ? 'style="display:none"' : ''}>
+            <label class="ai-settings-label" for="aiModel">模型</label>
+            <select class="ai-settings-select" id="aiModel">
+              ${modelOptions}
+            </select>
+          </div>
+
+          <div class="ai-settings-field" id="customModelField" ${config.provider !== 'custom' ? 'style="display:none"' : ''}>
+            <label class="ai-settings-label" for="aiCustomModel">自定义模型名称</label>
+            <input type="text" class="ai-settings-input" id="aiCustomModel"
+              placeholder="model-name"
+              value="${escapeHtml(config.customModel || '')}">
+          </div>
+
+          <div class="ai-settings-field">
+            <label class="ai-settings-label" for="aiApiKey">API Key</label>
+            <input type="password" class="ai-settings-input" id="aiApiKey"
+              placeholder="sk-..."
+              value="${escapeHtml(config.apiKey || '')}">
+            <p class="ai-settings-hint">你的 API Key 仅存储在本地浏览器中，不会上传到任何服务器。</p>
+          </div>
+
+          <div class="ai-settings-error" id="aiSettingsError"></div>
+
+          <div class="task-dialog-actions">
+            <button type="button" class="task-dialog-btn secondary" id="aiSettingsCancel">取消</button>
+            <button type="submit" class="task-dialog-btn primary">保存</button>
+          </div>
+        </form>
+      `, element => {
+        const form = element;
+        const providerSelect = element.querySelector('#aiProvider');
+        const modelSelect = element.querySelector('#aiModel');
+        const customApiBaseField = element.querySelector('#customApiBaseField');
+        const modelField = element.querySelector('#modelField');
+        const customModelField = element.querySelector('#customModelField');
+        const customApiBaseInput = element.querySelector('#aiCustomApiBase');
+        const customModelInput = element.querySelector('#aiCustomModel');
+        const apiKeyInput = element.querySelector('#aiApiKey');
+        const errorEl = element.querySelector('#aiSettingsError');
+        const cancelBtn = element.querySelector('#aiSettingsCancel');
+
+        // 提供商切换
+        const handleProviderChange = () => {
+          const provider = providerSelect.value;
+
+          if (provider === 'custom') {
+            customApiBaseField.style.display = 'block';
+            customModelField.style.display = 'block';
+            modelField.style.display = 'none';
+          } else {
+            customApiBaseField.style.display = 'none';
+            customModelField.style.display = 'none';
+            modelField.style.display = 'block';
+
+            // 更新模型选项
+            const models = getProviderModels(provider);
+            const defaultModel = getProviderDefaultModel(provider);
+            modelSelect.innerHTML = models.map(m =>
+              `<option value="${m.id}" ${m.id === defaultModel ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+          }
+        };
+
+        // 提交表单
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          errorEl.textContent = '';
+
+          const newConfig = {
+            provider: providerSelect.value,
+            apiKey: apiKeyInput.value.trim(),
+            model: providerSelect.value === 'custom' ? '' : modelSelect.value,
+            customApiBase: customApiBaseInput?.value?.trim() || '',
+            customModel: customModelInput?.value?.trim() || ''
+          };
+
+          const validation = validateAIConfig(newConfig);
+          if (!validation.valid) {
+            errorEl.textContent = validation.error;
+            return;
+          }
+
+          if (saveAIConfig(newConfig)) {
+            showSuccess('设置已保存');
+            close({ saved: true });
+          } else {
+            errorEl.textContent = '保存失败，请重试';
+          }
+        };
+
+        const handleCancel = () => {
+          close({ cancelled: true });
+        };
+
+        providerSelect.addEventListener('change', handleProviderChange);
+        form.addEventListener('submit', handleSubmit);
+        cancelBtn.addEventListener('click', handleCancel);
+
+        return {
+          cleanup: () => {
+            providerSelect.removeEventListener('change', handleProviderChange);
+            form.removeEventListener('submit', handleSubmit);
+            cancelBtn.removeEventListener('click', handleCancel);
+          },
+          focusTarget: apiKeyInput.value ? null : apiKeyInput
+        };
+      });
+
+      body.appendChild(content.element);
+
+      return {
+        cleanup: content.cleanup,
+        focusTarget: content.focusTarget
+      };
+    }
+  });
+}
+
+/**
+ * 绑定 AI 相关事件监听器
+ */
+function bindAIEventListeners() {
+  // AI 助手按钮
+  document.getElementById('aiAssistantBtn')?.addEventListener('click', toggleAIMode);
+
+  // AI 发送按钮
+  document.getElementById('aiSendBtn')?.addEventListener('click', sendAIMessage);
+
+  // AI 模式下按 Enter 发送
+  document.getElementById('taskInput')?.addEventListener('keydown', event => {
+    if (isAIMode && event.key === 'Enter') {
+      event.preventDefault();
+      sendAIMessage();
+    }
+  });
+
+  // 抽屉菜单中的设置按钮
+  document.getElementById('drawerSettingsBtn')?.addEventListener('click', async () => {
+    await openAISettingsDialog();
+  });
+
+  // 新建会话按钮
+  document.getElementById('aiChatNewBtn')?.addEventListener('click', () => {
+    const session = createNewSession(true);
+    if (session.messages.length === 0) {
+      addMessage(MESSAGE_TYPE.SYSTEM, getWelcomeMessage());
+    }
+    document.getElementById('taskInput')?.focus();
+  });
 }
 
 async function loadTasks() {
@@ -715,6 +1163,7 @@ function updateHeaderStats() {
 
 function bindEventListeners() {
   document.getElementById('sendBtn')?.addEventListener('click', () => {
+    if (isAIMode) return;
     const input = document.getElementById('taskInput');
     addTask(input?.value || '', currentQuadrant);
   });
@@ -722,6 +1171,7 @@ function bindEventListeners() {
   document.getElementById('taskInput')?.addEventListener('keydown', event => {
     if (event.key === 'Enter') {
       event.preventDefault();
+      if (isAIMode) return;
       const input = event.currentTarget;
       addTask(input.value, currentQuadrant);
     }
@@ -750,17 +1200,20 @@ function bindEventListeners() {
   document.getElementById('menuBtn')?.addEventListener('click', () => {
     document.getElementById('completedDrawer')?.classList.add('show');
     document.getElementById('drawerOverlay')?.classList.add('show');
+    document.body.classList.add('drawer-open');
     renderDrawerTasks();
   });
 
   document.getElementById('drawerCloseBtn')?.addEventListener('click', () => {
     document.getElementById('completedDrawer')?.classList.remove('show');
     document.getElementById('drawerOverlay')?.classList.remove('show');
+    document.body.classList.remove('drawer-open');
   });
 
   document.getElementById('drawerOverlay')?.addEventListener('click', () => {
     document.getElementById('completedDrawer')?.classList.remove('show');
     document.getElementById('drawerOverlay')?.classList.remove('show');
+    document.body.classList.remove('drawer-open');
   });
 
   document.querySelectorAll('.drawer-tab').forEach(tab => {

@@ -286,7 +286,7 @@
 
         .task-dialog-stack {
             position: relative;
-            z-index: 2000;
+            z-index: 3000;
         }
 
         .task-dialog-mask {
@@ -295,7 +295,8 @@
             animation: overlayFadeIn var(--overlay-transition) forwards;
         }
 
-        .task-dialog--nested .task-dialog-mask {
+        .task-dialog--nested .task-dialog-mask,
+        body.drawer-open .task-dialog-mask {
             background: transparent !important;
             animation: none;
         }
@@ -646,6 +647,398 @@
             border-color: #16a34a;
             color: #fff;
         }
+
+        /* ============================================
+           AI 助手相关样式
+           ============================================ */
+
+        /* AI 助手按钮 */
+        .ai-assistant-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1.5px solid #f97316;
+            color: #f97316;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .ai-assistant-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .ai-assistant-btn:hover {
+            background: rgba(249, 115, 22, 0.1);
+            transform: scale(1.05);
+        }
+
+        .ai-assistant-btn.active {
+            background: #f97316;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(249, 115, 22, 0.4);
+        }
+
+        /* AI 聊天容器 */
+        .ai-chat-container {
+            position: absolute;
+            top: 67px; /* 避开顶部标题栏 */
+            bottom: 63px; /* 避开底部输入栏 */
+            left: 0;
+            right: 0;
+            background: #fff;
+            z-index: 5;
+            display: flex;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .ai-chat-container.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .ai-chat-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+
+        .ai-chat-sidebar-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .ai-chat-sidebar-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--color-text-primary);
+        }
+
+        .ai-chat-new-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f97316;
+            color: #fff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+        }
+
+        .ai-chat-new-btn:hover {
+            background: #ea580c;
+            transform: scale(1.05);
+        }
+
+        .ai-chat-new-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .ai-chat-session-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ai-chat-session-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ai-chat-session-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .ai-chat-session-item.active {
+            background: rgba(249, 115, 22, 0.1);
+            border-left: 3px solid #f97316;
+        }
+
+        .ai-chat-session-title {
+            font-size: 13px;
+            color: var(--color-text-primary);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ai-chat-session-date {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .ai-chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0;
+        }
+
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 聊天消息 */
+        .ai-message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+        }
+
+        .ai-message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .ai-message.ai,
+        .ai-message.system {
+            align-self: flex-start;
+        }
+
+        .ai-message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .ai-message.user .ai-message-avatar {
+            background: #f97316;
+            color: #fff;
+        }
+
+        .ai-message.ai .ai-message-avatar {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            color: #fff;
+        }
+
+        .ai-message.system .ai-message-avatar {
+            background: #6b7280;
+            color: #fff;
+        }
+
+        .ai-message-content {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--color-text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .ai-message.user .ai-message-content {
+            background: #f97316;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message.ai .ai-message-content {
+            background: #f3f4f6;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-message.system .ai-message-content {
+            background: #fef3c7;
+            color: #92400e;
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-message.error .ai-message-content {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* 输入框 AI 模式 */
+        .demo-input-bar.ai-mode .task-type-btn,
+        .demo-input-bar.ai-mode #sendBtn {
+            display: none;
+        }
+
+        .demo-input-bar.ai-mode #aiSendBtn {
+            display: flex;
+        }
+
+        .demo-input-bar.ai-mode #taskInput {
+            background: rgba(249, 115, 22, 0.08);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .demo-input-bar.ai-mode #taskInput:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+        }
+
+        /* 任务矩阵容器动画 */
+        .demo-body {
+            transition: all 0.3s ease;
+        }
+
+        .demo-body.slide-out {
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+
+        /* 抽屉菜单 */
+        .drawer-menu {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .drawer-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 16px;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--color-text-primary);
+            transition: all 0.2s;
+        }
+
+        .drawer-menu-item:hover {
+            background: rgba(249, 115, 22, 0.05);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        .drawer-menu-item svg {
+            width: 20px;
+            height: 20px;
+            color: #f97316;
+        }
+
+        /* AI 设置弹窗 */
+        .ai-settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ai-settings-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ai-settings-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .ai-settings-input,
+        .ai-settings-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(15, 23, 42, 0.14);
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #fff;
+            color: var(--color-text-primary);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .ai-settings-input:focus,
+        .ai-settings-select:focus {
+            border-color: rgba(249, 115, 22, 0.7);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+        }
+
+        .ai-settings-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .ai-settings-hint {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            line-height: 1.4;
+        }
+
+        .ai-settings-error {
+            font-size: 12px;
+            color: #dc2626;
+            min-height: 18px;
+        }
+
+        /* 打字指示器 */
+        .ai-typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .ai-typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #f97316;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .ai-typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .ai-typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.6);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -718,11 +1111,20 @@
                         </div>
                         <div class="demo-titlebar-right">
                             <span class="questions-badge" id="questionsBadge">今日剩余 0 个任务</span>
+                            <button class="ai-assistant-btn" id="aiAssistantBtn" title="AI 助手">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="10" rx="2"/>
+                                    <circle cx="12" cy="5" r="2"/>
+                                    <path d="M12 7v4"/>
+                                    <line x1="8" y1="16" x2="8" y2="16"/>
+                                    <line x1="16" y1="16" x2="16" y2="16"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     
                     <!-- 主体内容：四象限矩阵 -->
-                    <div class="demo-body">
+                    <div class="demo-body" id="taskMatrixContainer">
                         <div class="task-section-label">任务优先级矩阵</div>
                         <div class="eisenhower-matrix" id="taskMatrix">
                             <!-- 第一象限：重要且紧急 -->
@@ -787,11 +1189,38 @@
                         </div>
                     </div>
                     
+                    <!-- AI 聊天界面（默认隐藏） -->
+                    <div class="ai-chat-container" id="aiChatContainer" hidden>
+                        <!-- 左侧：会话列表 -->
+                        <div class="ai-chat-sidebar">
+                            <div class="ai-chat-sidebar-header">
+                                <h3>历史记录</h3>
+                                <button class="ai-chat-new-btn" id="aiChatNewBtn" title="新对话">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="ai-chat-session-list" id="aiChatSessionList">
+                                <!-- 会话列表项动态渲染 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：聊天主界面 -->
+                        <div class="ai-chat-main">
+                            <div class="ai-chat-messages" id="aiChatMessages">
+                                <!-- 消息将动态渲染在这里 -->
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 输入栏 -->
                     <div class="demo-input-bar">
                         <button class="task-type-btn" id="taskTypeBtn" title="选择任务类型" type="button">Q1</button>
                         <input type="text" class="demo-input-field" id="taskInput" placeholder="添加新任务，例如：下午3点开会...">
                         <button class="demo-send-btn" id="sendBtn" type="button">➤</button>
+                        <button class="demo-send-btn ai-send-btn" id="aiSendBtn" type="button" hidden>➤</button>
                     </div>
                     
                     <div class="demo-window-shadow"></div>
@@ -803,8 +1232,17 @@
     <div class="drawer-overlay shared-overlay-mask" id="drawerOverlay"></div>
     <div class="drawer" id="completedDrawer">
         <div class="drawer-header">
-            <h2 class="drawer-title">已完成任务</h2>
+            <h2 class="drawer-title">菜单</h2>
             <button class="drawer-close" id="drawerCloseBtn">&times;</button>
+        </div>
+        <div class="drawer-menu" id="drawerMenu">
+            <button class="drawer-menu-item" id="drawerSettingsBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>AI 设置</span>
+            </button>
         </div>
         <div class="drawer-tabs">
             <button class="drawer-tab active" data-tab="today">当日已完成</button>
