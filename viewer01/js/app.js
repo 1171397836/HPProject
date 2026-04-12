@@ -1,11 +1,11 @@
 /**
  * 应用页统一任务逻辑
- * - 与 login 共用 auth.js / cloudbase.js
+ * - 与 login 共用 auth.js / storage.js
  * - 本地模式支持注册登录后直接增删改查
  * - 直接渲染四象限矩阵
  */
 
-import { initCloudBase, MAX_TASK_LENGTH, taskDB, validateTaskContent } from './cloudbase.js';
+import { MAX_TASK_LENGTH, taskDB, validateTaskContent } from './storage.js';
 import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
 import { createDialogContent, openStackedDialog } from './dialog.js';
 
@@ -89,7 +89,7 @@ async function initApp() {
   }
 
   currentUser = userInfo;
-  initCloudBase();
+  // 初始化已移除，不再需要 CloudBase
   restoreQuadrantSelection();
   updateUserDisplay('userName', 'userAvatar');
   bindEventListeners();

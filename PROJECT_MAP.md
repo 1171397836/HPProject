@@ -15,8 +15,8 @@
 - 项目名称：铁腕 - 智能任务管理工具
 - 当前形态：以 `viewer01/` 为主的纯前端项目
 - 核心业务：登录/注册、任务 CRUD、四象限展示、确认弹窗、退出登录
-- 本地开发默认走本地认证与本地任务存储
-- 线上预留 CloudBase 认证、数据库与静态托管能力
+- 仅支持本地 localStorage 认证与本地任务存储
+- 已完全移除 CloudBase 依赖
 
 ## 3. 仓库结构总览
 
@@ -25,7 +25,6 @@ HPProject/
 ├── PROJECT_MAP.md
 ├── PRD.md
 ├── package.json
-├── cloudbase-setup.js
 └── viewer01/
     ├── app.html
     ├── index.html
@@ -42,16 +41,16 @@ HPProject/
 
 | 路径 | 作用 |
 |------|------|
-| `package.json` | 根启动入口、部署脚本、项目元信息 |
+| `package.json` | 根启动入口、项目元信息 |
 | `PRD.md` | 产品需求文档，偏产品视角 |
-| `cloudbase-setup.js` | CloudBase 环境初始化、集合/规则/静态托管准备 |
 | `viewer01/` | 实际前端应用目录 |
 
 ## 5. 运行入口
 
 ### 5.1 本地启动
 
-- 根目录执行：`npm run dev`
+- **一键启动 (推荐)**：双击运行根目录的 `start.bat`
+- 命令行启动：根目录执行 `npm run dev`
 - 实际行为：进入 `viewer01/` 后启动静态服务
 - 默认打开页面：`viewer01/login.html`
 - 默认访问地址：`http://127.0.0.1:8080/login.html`
@@ -76,7 +75,7 @@ login.html
 app.html
   └── js/app.js
         ├── auth.js
-        ├── cloudbase.js
+        ├── storage.js
         └── dialog.js
 ```
 
@@ -89,7 +88,7 @@ app.html
 | `viewer01/js/login.js` | 登录/注册页控制、表单校验、提交逻辑、已登录跳转 | 登录页交互异常、表单校验异常 |
 | `viewer01/js/app.js` | 应用页初始化、任务渲染、增删改查、象限切换、统计、清空已完成、退出流程 | 任务页任何核心功能异常 |
 | `viewer01/js/auth.js` | 认证状态、登录注册、鉴权守卫、用户展示、退出登录 | 登录态异常、跳转异常、用户信息异常 |
-| `viewer01/js/cloudbase.js` | 任务数据访问层，本地模式与 CloudBase 模式切换 | 任务数据读写异常、存储模式问题 |
+| `viewer01/js/storage.js` | 任务数据访问层，纯本地 localStorage 模式 | 任务数据读写异常、存储模式问题 |
 | `viewer01/js/dialog.js` | 通用弹窗与堆叠弹窗能力 | 编辑任务弹窗、确认弹窗异常 |
 
 ### 6.2 历史/草稿文件
@@ -135,7 +134,7 @@ app.html
 |------|----------|
 | 登录/注册 | `viewer01/js/login.js`、`viewer01/js/auth.js` |
 | 登录态校验 | `viewer01/js/auth.js` |
-| 任务加载 | `viewer01/js/app.js`、`viewer01/js/cloudbase.js` |
+| 任务加载 | `viewer01/js/app.js`、`viewer01/js/storage.js` |
 | 添加任务 | `viewer01/js/app.js` |
 | 编辑任务 | `viewer01/js/app.js`、`viewer01/js/dialog.js` |
 | 删除任务 | `viewer01/js/app.js` |
@@ -148,15 +147,13 @@ app.html
 
 ### 9.1 认证
 
-- `auth.js` 统一处理本地认证与 CloudBase 认证
-- 本地开发环境默认优先使用本地认证
+- `auth.js` 统一处理本地认证
 - 登录态与本地用户库使用 `localStorage` 保存
 
 ### 9.2 任务数据
 
-- `cloudbase.js` 是唯一任务数据访问层
-- 本地开发默认使用 `localStorage`
-- 线上可切到 CloudBase 数据库
+- `storage.js` 是唯一任务数据访问层
+- 任务数据使用 `localStorage` 保存
 - 任务字段核心包括：
   - `_id`
   - `uid`
@@ -192,13 +189,11 @@ app.html
 - 退出确认
 - 四象限分组与渲染
 
-## 11. 部署与环境入口
+## 11. 测试与环境入口
 
 | 入口 | 用途 |
 |------|------|
-| `npm run setup` | 初始化 CloudBase 环境 |
-| `npm run deploy` | 部署 `viewer01/` 到 CloudBase 静态托管 |
-| `cloudbase-setup.js` | CloudBase 环境准备脚本 |
+| `npm run dev` | 启动本地测试环境 |
 
 ## 12. 常见排查路径
 
@@ -233,7 +228,7 @@ app.html
 优先查看：
 
 - `viewer01/js/app.js`
-- `viewer01/js/cloudbase.js`
+- `viewer01/js/storage.js`
 
 重点关注：
 

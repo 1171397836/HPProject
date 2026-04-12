@@ -271,7 +271,7 @@ globalThis.location = {
 };
 
 const authModule = await import('../js/auth.js');
-const cloudbaseModule = await import('../js/cloudbase.js');
+const cloudbaseModule = await import('../js/storage.js');
 const appModule = await import('../js/app.js');
 
 const {
