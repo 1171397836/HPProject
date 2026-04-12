@@ -4,9 +4,10 @@
  */
 
 import { getCurrentUser } from './auth.js';
+import CONFIG from './config.js';
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const STORAGE_KEY_TASKS = 'tiewan_tasks_db';
+const STORAGE_KEY_TASKS = CONFIG.STORAGE_KEYS.TASKS_DB;
 const MAX_TASK_LENGTH = 200;
 const VALID_QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 

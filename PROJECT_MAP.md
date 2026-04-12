@@ -25,6 +25,7 @@ HPProject/
 ├── PROJECT_MAP.md
 ├── PRD.md
 ├── package.json
+├── zeabur.json
 └── viewer01/
     ├── app.html
     ├── index.html
@@ -85,6 +86,7 @@ app.html
 
 | 文件 | 职责 | 什么时候先看它 |
 |------|------|----------------|
+| `viewer01/js/config.js` | 全局配置（环境判断、API 地址、LocalStorage 键名等） | 涉及环境变量、存储键名、接口地址变更时 |
 | `viewer01/js/login.js` | 登录/注册页控制、表单校验、提交逻辑、已登录跳转 | 登录页交互异常、表单校验异常 |
 | `viewer01/js/app.js` | 应用页初始化、任务渲染、增删改查、象限切换、统计、清空已完成、退出流程 | 任务页任何核心功能异常 |
 | `viewer01/js/auth.js` | 认证状态、登录注册、鉴权守卫、用户展示、退出登录 | 登录态异常、跳转异常、用户信息异常 |

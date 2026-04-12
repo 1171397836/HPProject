@@ -8,8 +8,9 @@
 import { MAX_TASK_LENGTH, taskDB, validateTaskContent } from './storage.js';
 import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
 import { createDialogContent, openStackedDialog } from './dialog.js';
+import CONFIG from './config.js';
 
-const STORAGE_KEY_QUADRANT = 'tiewan_current_quadrant';
+const STORAGE_KEY_QUADRANT = CONFIG.STORAGE_KEYS.CURRENT_QUADRANT;
 
 const QUADRANT_CONFIG = {
   q1: { containerId: 'quadrant-1', label: '立即做', fullName: '重要且紧急', shortCode: 'Q1' },

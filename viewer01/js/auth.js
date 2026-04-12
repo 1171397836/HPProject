@@ -5,9 +5,11 @@
  * 2. login/app 共用同一套认证状态与用户库；
  */
 
-const STORAGE_KEY_USER = 'tiewan_user';
-const STORAGE_KEY_LOGIN_TIME = 'tiewan_login_time';
-const STORAGE_KEY_USERS_DB = 'tiewan_users_db';
+import CONFIG from './config.js';
+
+const STORAGE_KEY_USER = CONFIG.STORAGE_KEYS.USER;
+const STORAGE_KEY_LOGIN_TIME = CONFIG.STORAGE_KEYS.LOGIN_TIME;
+const STORAGE_KEY_USERS_DB = CONFIG.STORAGE_KEYS.USERS_DB;
 
 const LOGIN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000;
 const PASSWORD_MIN_LENGTH = 6;
