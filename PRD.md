@@ -18,8 +18,8 @@
 ### 1.3 MVP目标
 - 快速记录待办任务
 - 支持桌面端和移动端使用
-- 账号本地登录系统 (当前为本地单机版)
-- *双端数据同步 (部署方案待定)*
+- 账号云端登录系统 (Supabase Auth)
+- *双端数据同步 (Supabase Database)*
 
 ---
 
@@ -54,8 +54,8 @@
   - **历史已完成**: 展示本周之前完成的所有任务。
 
 #### 2.1.3 用户系统
-- **注册**: 用户名 + 密码 (当前仅保存在本地)
-- **登录**: 用户名 + 密码
+- **注册**: 邮箱 + 密码
+- **登录**: 邮箱 + 密码
 - **退出登录**: 清除本地登录状态
 
 ---
@@ -82,8 +82,8 @@
                         │
 ┌───────────────────────▼────────────────────────────────────┐
 │                      数据存储 (Storage)                     │
-│                  当前状态：浏览器 LocalStorage               │
-│                  未来状态：待评估更简单的云端部署方案          │
+│                  当前状态：Supabase (PostgreSQL)            │
+│                  未来状态：支持离线缓存与多端实时同步       │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -92,40 +92,52 @@
 | 层级 | 技术 | 说明 |
 |------|------|------|
 | 前端 | HTML5 + CSS3 + ES6 | 原生前端技术实现 |
-| 存储 | localStorage | 当前纯本地存储模式 |
-| 部署 | Zeabur (Static) | 当前采用 Zeabur 静态托管部署，已添加 `zeabur.json` 配置文件 |
+| 存储 | Supabase | 提供 Auth 和 Database，实现云端多端同步 |
+| 部署 | Vercel (Static) | 采用 Vercel 静态托管部署，发布 `viewer01` 目录 |
 
 ### 3.3 数据模型
 
-#### 用户集合 (LocalUserDB)
-保存在 `localStorage` 中，字段：
-- `uid`: 用户唯一标识
-- `username`: 用户名
-- `password`: 密码（明文/简单Hash）
-- `createdAt`: 注册时间
+#### 用户集合 (Supabase Auth)
+依托 Supabase 官方 `auth.users` 表管理：
+- `id`: 用户唯一标识 (UUID)
+- `email`: 邮箱 (用于登录)
+- `password`: 密码 (Supabase加密存储)
+- `created_at`: 注册时间
 
-#### 任务集合 (taskDB)
-保存在 `localStorage` 中，字段：
+#### 任务集合 (tasks)
+保存在 Supabase `tasks` 表中，字段：
 
 | 字段名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| `_id` | String | 是 | 任务ID |
-| `content` | String | 是 | 任务内容 |
+| `id` | UUID | 是 | 任务ID (主键) |
+| `content` | Text | 是 | 任务内容 |
 | `completed` | Boolean | 是 | 是否完成，默认false |
-| `quadrant` | Number | 是 | 象限 1-4 |
-| `uid` | String | 是 | 关联用户ID |
+| `quadrant` | Text | 是 | 象限 q1/q2/q3/q4 |
+| `user_id` | UUID | 是 | 关联用户ID (外键 `auth.users.id`) |
 | `archived` | Boolean | 否 | 是否已归档（默认false）。归档后不在四象限显示，仅在统计中显示 |
-| `completedAt`| Date | 否 | 任务被标记为完成的时间（用于分类统计） |
-| `createdAt` | Date | 自动 | 创建时间 |
-| `updatedAt` | Date | 自动 | 更新时间 |
+| `completed_at`| Timestamp | 否 | 任务被标记为完成的时间（用于分类统计） |
+| `created_at` | Timestamp | 自动 | 创建时间 |
+| `updated_at` | Timestamp | 自动 | 更新时间 |
+
+#### 用户配置集合 (user_configs)
+保存在 Supabase `user_configs` 表中，字段：
+- `id`: UUID (主键)
+- `user_id`: UUID (外键 `auth.users.id`，唯一)
+- `ai_provider`: Text (AI 提供商，如 'deepseek')
+- `ai_api_key`: Text (AI 密钥)
+- `ai_model`: Text (选中的模型)
+- `custom_api_base`: Text
+- `custom_model`: Text
+- `ui_quadrant`: Text (最后一次选中的象限)
+- `updated_at`: Timestamp
 
 ---
 
 ## 4. 页面结构
 
 ### 4.1 登录/注册页
-- 登录表单：用户名、密码、登录按钮
-- 注册表单：用户名、密码、确认密码、注册按钮
+- 登录表单：邮箱、密码、登录按钮
+- 注册表单：邮箱、密码、确认密码、注册按钮
 - 切换链接："还没有账号？立即注册" / "已有账号？立即登录"
 
 ### 4.2 任务管理页（主页面）
@@ -141,13 +153,13 @@
 ### 5.1 首次使用
 1. 打开网页
 2. 点击"注册账号"
-3. 输入用户名、密码
+3. 输入邮箱、密码
 4. 注册成功，自动登录
 5. 进入任务管理页
 
 ### 5.2 日常使用
 1. 打开网页
-2. 输入用户名、密码登录
+2. 输入邮箱、密码登录
 3. 查看任务列表
 4. 添加/完成/删除任务
 5. 数据自动保存到本地浏览器
@@ -172,9 +184,10 @@
 - 运行 `npm run dev` 启动本地静态服务器
 - 数据保存在浏览器 `localStorage` 中
 
-### 7.2 云端部署 (待评估)
-- 曾尝试 CloudBase 但因故回退。
-- 下一步计划：评估更简单的云端存储和静态托管方案。
+### 7.2 云端部署 (Supabase)
+- 前端通过 Supabase JS SDK 直接连接云端数据库。
+- 后端数据保存在 Supabase 的 PostgreSQL 数据库中。
+- 用户认证通过 Supabase Auth 进行。
 
 ---
 
@@ -185,8 +198,8 @@
 | 1 | 确定MVP方案与本地开发基线 | PM | 已完成 |
 | 2 | 创建登录/注册页面与本地验证 | 工程师Agent | 已完成 |
 | 3 | 清除 CloudBase 遗留代码回退本地模式 | 工程师Agent | 已完成 |
-| 4 | 调研并评估新的轻量级云端部署方案 | PM / 架构师Agent | 待开始 |
-| 5 | 对接新后端方案 | 工程师Agent | 待开始 |
+| 4 | 确定 Supabase 作为后端并更新数据模型 | PM | 已完成 |
+| 5 | 对接 Supabase SDK (改写 storage.js, auth.js, aiConfig.js) | 前端开发工程师 | 待开始 |
 | 6 | 测试验证（跨设备同步） | 用户+工程师Agent | 待开始 |
 | 7 | 部署上线 | 工程师Agent | 待开始 |
 
@@ -201,4 +214,5 @@
 | v1.2 | 2026-04-12 | 移除 CloudBase 依赖，全面退回本地 localStorage 模式 | 前端开发工程师 |
 | v1.3 | 2026-04-12 | 更新文档，清理 CloudBase 描述，准备评估新部署方案 | SOLO Coder |
 | v1.4 | 2026-04-12 | 移除清空已完成功能，增加左侧抽屉历史记录，四象限仅展示未完成，完成任务增加粒子特效与淡出动画 | 前端开发工程师 |
-| v1.5 | 2026-04-12 | 抽取前端硬编码配置至 `config.js`，增加 `zeabur.json` 以明确 Zeabur 静态托管模式 | SOLO Coder |
+| v1.5 | 2026-04-12 | 抽取前端硬编码配置至 `config.js` | SOLO Coder |
+| v1.6 | 2026-04-12 | 确定采用 Supabase 作为后端，更新表结构（tasks, user_configs），移除 AI Chat 历史同步需求 | SOLO Coder |

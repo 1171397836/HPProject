@@ -14,8 +14,8 @@
 
 - 项目名称：铁腕 - 智能任务管理工具
 - 当前形态：以 `viewer01/` 为主的纯前端项目
-- 核心业务：登录/注册、任务 CRUD、四象限展示、确认弹窗、退出登录
-- 仅支持本地 localStorage 认证与本地任务存储
+- 核心业务：登录/注册、任务 CRUD、四象限展示、确认弹窗、退出登录、AI 助手
+- 即将接入 Supabase 作为云端数据同步方案 (Auth + PostgreSQL)
 - 已完全移除 CloudBase 依赖
 
 ## 3. 仓库结构总览
@@ -25,7 +25,6 @@ HPProject/
 ├── PROJECT_MAP.md
 ├── PRD.md
 ├── package.json
-├── zeabur.json
 └── viewer01/
     ├── app.html
     ├── index.html
@@ -112,7 +111,7 @@ app.html
 - 脚本入口：`viewer01/js/login.js`
 - 关键职责：
   - 登录与注册表单切换
-  - 用户名/密码即时校验
+  - 邮箱/密码即时校验
   - 调用 `auth.js` 完成登录注册
   - 已登录用户直接跳转 `app.html`
 
@@ -149,21 +148,21 @@ app.html
 
 ### 9.1 认证
 
-- `auth.js` 统一处理本地认证
-- 登录态与本地用户库使用 `localStorage` 保存
+- `auth.js` 统一处理认证逻辑
+- 即将接入 Supabase Auth，替代当前的 localStorage 模拟登录
 
 ### 9.2 任务数据
 
 - `storage.js` 是唯一任务数据访问层
-- 任务数据使用 `localStorage` 保存
+- 即将接入 Supabase Database，替代 localStorage
 - 任务字段核心包括：
-  - `_id`
-  - `uid`
+  - `id` (UUID)
+  - `user_id`
   - `content`
   - `quadrant`
   - `completed`
-  - `createdAt`
-  - `updatedAt`
+  - `created_at`
+  - `updated_at`
 
 ### 9.3 页面状态
 

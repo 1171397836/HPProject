@@ -1,13 +1,7 @@
-/**
- * 任务数据统一访问层
- * - 仅使用 localStorage 进行本地存储
- */
-
+import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import CONFIG from './config.js';
 
-const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const STORAGE_KEY_TASKS = CONFIG.STORAGE_KEYS.TASKS_DB;
 const MAX_TASK_LENGTH = 200;
 const VALID_QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 
@@ -20,57 +14,14 @@ const ERROR_MESSAGES = {
   UNKNOWN_ERROR: '发生未知错误，请稍后重试'
 };
 
-function createMemoryStorage() {
-  const store = new Map();
-
-  return {
-    getItem(key) {
-      return store.has(key) ? store.get(key) : null;
-    },
-    setItem(key, value) {
-      store.set(key, String(value));
-    },
-    removeItem(key) {
-      store.delete(key);
-    }
-  };
-}
-
-const safeStorage = (() => {
-  try {
-    if (globalScope.localStorage) {
-      return globalScope.localStorage;
-    }
-  } catch (error) {
-    console.warn('[TaskDB] localStorage 不可用，回退到内存存储', error);
-  }
-
-  return createMemoryStorage();
-})();
-
 function handleError(error, defaultMessage = '操作失败') {
   const errorCode = error?.code || 'UNKNOWN_ERROR';
-
   return {
     code: errorCode,
     message: ERROR_MESSAGES[errorCode] || defaultMessage,
     originalError: error || null,
     timestamp: new Date().toISOString()
   };
-}
-
-function readTasks() {
-  try {
-    const rawValue = safeStorage.getItem(STORAGE_KEY_TASKS);
-    return rawValue ? JSON.parse(rawValue) : [];
-  } catch (error) {
-    console.warn('[TaskDB] 读取本地任务失败', error);
-    return [];
-  }
-}
-
-function writeTasks(tasks) {
-  safeStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
 }
 
 function validateTaskContent(content) {
@@ -112,21 +63,21 @@ function validateTaskContent(content) {
 function normalizeTask(task) {
   return {
     ...task,
-    createdAt: task.createdAt || new Date().toISOString(),
-    updatedAt: task.updatedAt || new Date().toISOString()
+    _id: task.id, // map Supabase id to _id for frontend compatibility
+    uid: task.user_id, // map user_id to uid
+    createdAt: task.created_at || new Date().toISOString(),
+    updatedAt: task.updated_at || new Date().toISOString()
   };
 }
 
 function getUserOrAuthError() {
   const user = getCurrentUser();
-
   if (!user?.uid) {
     return {
       success: false,
       error: handleError({ code: 'AUTH_FAIL' }, '用户未登录')
     };
   }
-
   return {
     success: true,
     user
@@ -140,16 +91,26 @@ const taskDB = {
       return { success: false, data: [], error: authState.error };
     }
 
-    const tasks = readTasks()
-      .filter(task => task.uid === authState.user.uid)
-      .map(normalizeTask)
-      .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', authState.user.uid)
+        .order('created_at', { ascending: false });
 
-    return {
-      success: true,
-      data: tasks,
-      error: null
-    };
+      if (error) throw error;
+
+      const tasks = (data || []).map(normalizeTask);
+
+      return {
+        success: true,
+        data: tasks,
+        error: null
+      };
+    } catch (error) {
+      console.error('[TaskDB] getTasks error', error);
+      return { success: false, data: [], error: handleError({ code: 'DB_ERROR' }, '获取任务失败') };
+    }
   },
 
   async addTask(content, quadrant) {
@@ -167,30 +128,38 @@ const taskDB = {
       return { success: false, data: null, error: authState.error };
     }
 
-    const tasks = readTasks();
     const now = new Date().toISOString();
-    const task = {
-      _id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      uid: authState.user.uid,
+    const newTask = {
+      user_id: authState.user.uid,
       content: contentValidation.normalizedContent,
       quadrant,
       completed: false,
-      createdAt: now,
-      updatedAt: now
+      created_at: now,
+      updated_at: now
     };
 
-    tasks.push(task);
-    writeTasks(tasks);
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([newTask])
+        .select()
+        .single();
 
-    return {
-      success: true,
-      data: task,
-      error: null
-    };
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: normalizeTask(data),
+        error: null
+      };
+    } catch (error) {
+      console.error('[TaskDB] addTask error', error);
+      return { success: false, data: null, error: handleError({ code: 'DB_ERROR' }, '添加任务失败') };
+    }
   },
 
   async updateTask(taskId, completed) {
-    if (!taskId || typeof taskId !== 'string') {
+    if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
       return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '任务ID不能为空') };
     }
 
@@ -202,7 +171,7 @@ const taskDB = {
   },
 
   async updateTaskContent(taskId, updateData = {}) {
-    if (!taskId || typeof taskId !== 'string') {
+    if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
       return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '任务ID不能为空') };
     }
 
@@ -223,41 +192,43 @@ const taskDB = {
       return { success: false, data: null, error: authState.error };
     }
 
-    const sanitizedUpdates = {
-      ...updateData
-    };
-
+    const sanitizedUpdates = {};
+    if (updateData.completed !== undefined) sanitizedUpdates.completed = updateData.completed;
+    if (updateData.quadrant !== undefined) sanitizedUpdates.quadrant = updateData.quadrant;
     if (contentValidation) {
       sanitizedUpdates.content = contentValidation.normalizedContent;
     }
+    sanitizedUpdates.updated_at = new Date().toISOString();
 
-    const tasks = readTasks();
-    const taskIndex = tasks.findIndex(task => task._id === taskId && task.uid === authState.user.uid);
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(sanitizedUpdates)
+        .eq('id', taskId)
+        .eq('user_id', authState.user.uid)
+        .select()
+        .single();
 
-    if (taskIndex === -1) {
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return { success: false, data: null, error: handleError({ code: 'DOC_NOT_EXIST' }, '任务不存在') };
+        }
+        throw error;
+      }
+
       return {
-        success: false,
-        data: null,
-        error: handleError({ code: 'DOC_NOT_EXIST' }, '任务不存在')
+        success: true,
+        data: normalizeTask(data),
+        error: null
       };
+    } catch (error) {
+      console.error('[TaskDB] updateTask error', error);
+      return { success: false, data: null, error: handleError({ code: 'DB_ERROR' }, '更新任务失败') };
     }
-
-    tasks[taskIndex] = {
-      ...tasks[taskIndex],
-      ...sanitizedUpdates,
-      updatedAt: new Date().toISOString()
-    };
-    writeTasks(tasks);
-
-    return {
-      success: true,
-      data: tasks[taskIndex],
-      error: null
-    };
   },
 
   async deleteTask(taskId) {
-    if (!taskId || typeof taskId !== 'string') {
+    if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
       return { success: false, error: handleError({ code: 'PARAM_ERROR' }, '任务ID不能为空') };
     }
 
@@ -266,22 +237,23 @@ const taskDB = {
       return { success: false, error: authState.error };
     }
 
-    const tasks = readTasks();
-    const nextTasks = tasks.filter(task => !(task._id === taskId && task.uid === authState.user.uid));
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId)
+        .eq('user_id', authState.user.uid);
 
-    if (nextTasks.length === tasks.length) {
+      if (error) throw error;
+
       return {
-        success: false,
-        error: handleError({ code: 'DOC_NOT_EXIST' }, '任务不存在')
+        success: true,
+        error: null
       };
+    } catch (error) {
+      console.error('[TaskDB] deleteTask error', error);
+      return { success: false, error: handleError({ code: 'DB_ERROR' }, '删除任务失败') };
     }
-
-    writeTasks(nextTasks);
-
-    return {
-      success: true,
-      error: null
-    };
   },
 
   async clearCompleted() {
@@ -290,17 +262,25 @@ const taskDB = {
       return { success: false, deletedCount: 0, error: authState.error };
     }
 
-    const tasks = readTasks();
-    const completedTasks = tasks.filter(task => task.uid === authState.user.uid && task.completed);
-    const nextTasks = tasks.filter(task => !(task.uid === authState.user.uid && task.completed));
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', authState.user.uid)
+        .eq('completed', true)
+        .select();
 
-    writeTasks(nextTasks);
+      if (error) throw error;
 
-    return {
-      success: true,
-      deletedCount: completedTasks.length,
-      error: null
-    };
+      return {
+        success: true,
+        deletedCount: data?.length || 0,
+        error: null
+      };
+    } catch (error) {
+      console.error('[TaskDB] clearCompleted error', error);
+      return { success: false, deletedCount: 0, error: handleError({ code: 'DB_ERROR' }, '清理已完成任务失败') };
+    }
   }
 };
 

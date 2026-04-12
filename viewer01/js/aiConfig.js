@@ -1,24 +1,14 @@
+import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 
 /**
  * AI 配置管理模块
  * 管理 LLM 提供商、API Key、模型选择等配置
- * 配置存储在 localStorage 中，key 为动态生成
+ * 配置迁移到 Supabase 的 user_configs 表中，使用内存缓存以兼容同步读取
  */
 
-// 动态获取当前用户的 storage key
-function getStorageKey() {
-  const user = getCurrentUser();
-  if (user && user.uid) {
-    return `tiewan_ai_config_${user.uid}`;
-  }
-  return 'tiewan_ai_config_default';
-}
-
-// 兼容旧版配置或对外导出
 const AI_CONFIG_KEY = 'tiewan_ai_config';
 
-// 支持的 LLM 提供商配置 (2026年最新模型)
 const AI_PROVIDERS = {
   deepseek: {
     name: 'DeepSeek',
@@ -89,7 +79,6 @@ const AI_PROVIDERS = {
   }
 };
 
-// 默认配置 (2026年最新默认模型)
 const DEFAULT_CONFIG = {
   provider: 'deepseek',
   apiKey: '',
@@ -98,168 +87,123 @@ const DEFAULT_CONFIG = {
   customModel: ''
 };
 
+// 内存中缓存配置，支持同步读取
+let cachedConfig = { ...DEFAULT_CONFIG };
+let isInitialized = false;
+
 /**
- * 获取安全的 localStorage 引用
+ * 初始化 AI 配置，从 Supabase 获取
  */
-function getSafeStorage() {
+async function initAIConfig() {
+  const user = getCurrentUser();
+  if (!user || !user.uid) return;
+
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage;
+    const { data, error } = await supabase
+      .from('user_configs')
+      .select('config')
+      .eq('uid', user.uid)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.warn('[AIConfig] 获取云端配置失败', error);
+    }
+
+    if (data && data.config) {
+      cachedConfig = { ...DEFAULT_CONFIG, ...data.config };
     }
   } catch (error) {
-    console.warn('[AIConfig] localStorage 不可用', error);
+    console.warn('[AIConfig] 初始化配置失败', error);
+  } finally {
+    isInitialized = true;
   }
-  return null;
 }
 
 /**
- * 读取 AI 配置
+ * 读取 AI 配置 (同步，返回缓存)
  * @returns {Object} AI 配置对象
  */
 function getAIConfig() {
-  const storage = getSafeStorage();
-  if (!storage) {
-    return { ...DEFAULT_CONFIG };
-  }
-
-  try {
-    const key = getStorageKey();
-    let saved = storage.getItem(key);
-
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // 合并默认配置，确保新字段存在
-      return { ...DEFAULT_CONFIG, ...parsed };
-    }
-  } catch (error) {
-    console.warn('[AIConfig] 读取配置失败', error);
-  }
-
-  return { ...DEFAULT_CONFIG };
+  return { ...cachedConfig };
 }
 
 /**
- * 保存 AI 配置
+ * 保存 AI 配置到缓存和 Supabase
  * @param {Object} config - 配置对象
- * @returns {boolean} 是否保存成功
+ * @returns {boolean} 是否启动保存
  */
 function saveAIConfig(config) {
-  const storage = getSafeStorage();
-  if (!storage) {
-    return false;
-  }
+  const newConfig = { ...DEFAULT_CONFIG, ...config };
+  cachedConfig = newConfig;
 
-  try {
-    const key = getStorageKey();
-    storage.setItem(key, JSON.stringify(config));
+  const user = getCurrentUser();
+  if (user && user.uid) {
+    const now = new Date().toISOString();
+    supabase
+      .from('user_configs')
+      .upsert({
+        uid: user.uid,
+        config: newConfig,
+        updated_at: now
+      }, { onConflict: 'uid' })
+      .then(({ error }) => {
+        if (error) {
+          console.error('[AIConfig] 保存云端配置失败', error);
+        }
+      });
     return true;
-  } catch (error) {
-    console.warn('[AIConfig] 保存配置失败', error);
-    return false;
   }
+  return false;
 }
 
-/**
- * 验证配置是否有效
- * @param {Object} config - 配置对象
- * @returns {Object} 验证结果 { valid: boolean, error: string|null }
- */
 function validateAIConfig(config) {
-  if (!config) {
-    return { valid: false, error: '配置不能为空' };
-  }
-
-  if (!config.provider) {
-    return { valid: false, error: '请选择 LLM 提供商' };
-  }
-
-  if (!AI_PROVIDERS[config.provider]) {
-    return { valid: false, error: '未知的提供商' };
-  }
-
-  if (!config.apiKey || config.apiKey.trim().length < 10) {
-    return { valid: false, error: '请输入有效的 API Key' };
-  }
+  if (!config) return { valid: false, error: '配置不能为空' };
+  if (!config.provider) return { valid: false, error: '请选择 LLM 提供商' };
+  if (!AI_PROVIDERS[config.provider]) return { valid: false, error: '未知的提供商' };
+  if (!config.apiKey || config.apiKey.trim().length < 10) return { valid: false, error: '请输入有效的 API Key' };
 
   if (config.provider === 'custom') {
-    if (!config.customApiBase || !config.customApiBase.trim()) {
-      return { valid: false, error: '请输入自定义 API 地址' };
-    }
-    if (!config.customModel || !config.customModel.trim()) {
-      return { valid: false, error: '请输入自定义模型名称' };
-    }
+    if (!config.customApiBase || !config.customApiBase.trim()) return { valid: false, error: '请输入自定义 API 地址' };
+    if (!config.customModel || !config.customModel.trim()) return { valid: false, error: '请输入自定义模型名称' };
   } else {
-    if (!config.model) {
-      return { valid: false, error: '请选择模型' };
-    }
+    if (!config.model) return { valid: false, error: '请选择模型' };
   }
 
   return { valid: true, error: null };
 }
 
-/**
- * 获取当前生效的 API 基础地址
- * @param {Object} config - 配置对象
- * @returns {string} API 基础地址
- */
 function getApiBase(config) {
-  if (config.provider === 'custom') {
-    return config.customApiBase?.trim() || '';
-  }
+  if (config.provider === 'custom') return config.customApiBase?.trim() || '';
   return AI_PROVIDERS[config.provider]?.apiBase || '';
 }
 
-/**
- * 获取当前生效的模型 ID
- * @param {Object} config - 配置对象
- * @returns {string} 模型 ID
- */
 function getModelId(config) {
-  if (config.provider === 'custom') {
-    return config.customModel?.trim() || '';
-  }
+  if (config.provider === 'custom') return config.customModel?.trim() || '';
   return config.model || AI_PROVIDERS[config.provider]?.defaultModel || '';
 }
 
-/**
- * 获取提供商的模型列表
- * @param {string} provider - 提供商 ID
- * @returns {Array} 模型列表
- */
 function getProviderModels(provider) {
   return AI_PROVIDERS[provider]?.models || [];
 }
 
-/**
- * 获取提供商的默认模型
- * @param {string} provider - 提供商 ID
- * @returns {string} 默认模型 ID
- */
 function getProviderDefaultModel(provider) {
   return AI_PROVIDERS[provider]?.defaultModel || '';
 }
 
-/**
- * 检查配置是否已设置（有 API Key）
- * @returns {boolean}
- */
 function isAIConfigReady() {
   const config = getAIConfig();
   return !!config.apiKey && config.apiKey.trim().length >= 10;
 }
 
-/**
- * 清除 AI 配置
- */
 function clearAIConfig() {
-  const storage = getSafeStorage();
-  if (storage) {
-    try {
-      const key = getStorageKey();
-      storage.removeItem(key);
-    } catch (error) {
-      console.warn('[AIConfig] 清除配置失败', error);
-    }
+  cachedConfig = { ...DEFAULT_CONFIG };
+  const user = getCurrentUser();
+  if (user && user.uid) {
+    supabase
+      .from('user_configs')
+      .delete()
+      .eq('uid', user.uid)
+      .then();
   }
 }
 
@@ -275,7 +219,8 @@ export {
   getProviderModels,
   isAIConfigReady,
   saveAIConfig,
-  validateAIConfig
+  validateAIConfig,
+  initAIConfig
 };
 
 export default {
@@ -289,5 +234,6 @@ export default {
   getModelId,
   getProviderModels,
   getProviderDefaultModel,
-  clearAIConfig
+  clearAIConfig,
+  initAIConfig
 };

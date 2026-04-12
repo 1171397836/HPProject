@@ -16,7 +16,8 @@ import {
   getProviderModels,
   isAIConfigReady,
   saveAIConfig,
-  validateAIConfig
+  validateAIConfig,
+  initAIConfig
 } from './aiConfig.js';
 import {
   addMessage,
@@ -127,6 +128,7 @@ async function initApp() {
   bindEventListeners();
   bindAIEventListeners();
   updateQuadrantSelectorUI();
+  await initAIConfig();
   await loadTasks();
 
   // 初始化 AI 聊天

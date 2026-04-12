@@ -16,9 +16,9 @@ function getElements() {
     showLoginBtn: document.getElementById('showLogin'),
     loginForm: document.getElementById('loginForm'),
     registerForm: document.getElementById('registerForm'),
-    loginUsername: document.getElementById('loginUsername'),
+    loginEmail: document.getElementById('loginEmail'),
     loginPassword: document.getElementById('loginPassword'),
-    registerUsername: document.getElementById('registerUsername'),
+    registerEmail: document.getElementById('registerEmail'),
     registerPassword: document.getElementById('registerPassword'),
     registerConfirmPassword: document.getElementById('registerConfirmPassword'),
     toggleLoginPassword: document.getElementById('toggleLoginPassword'),
@@ -74,9 +74,9 @@ function switchToLogin(elements) {
 }
 
 function bindRealtimeValidation(elements) {
-  elements.loginUsername.addEventListener('input', () => {
-    if (validateUsername(elements.loginUsername.value).valid) {
-      hideFieldError(elements.loginUsername, 'loginUsernameError');
+  elements.loginEmail.addEventListener('input', () => {
+    if (validateUsername(elements.loginEmail.value).valid) {
+      hideFieldError(elements.loginEmail, 'loginEmailError');
     }
   });
 
@@ -86,9 +86,9 @@ function bindRealtimeValidation(elements) {
     }
   });
 
-  elements.registerUsername.addEventListener('input', () => {
-    if (validateUsername(elements.registerUsername.value).valid) {
-      hideFieldError(elements.registerUsername, 'registerUsernameError');
+  elements.registerEmail.addEventListener('input', () => {
+    if (validateUsername(elements.registerEmail.value).valid) {
+      hideFieldError(elements.registerEmail, 'registerEmailError');
     }
   });
 
@@ -110,14 +110,14 @@ function bindRealtimeValidation(elements) {
 }
 
 async function submitLogin(elements) {
-  hideFieldError(elements.loginUsername, 'loginUsernameError');
+  hideFieldError(elements.loginEmail, 'loginEmailError');
   hideFieldError(elements.loginPassword, 'loginPasswordError');
 
-  const usernameResult = validateUsername(elements.loginUsername.value);
+  const usernameResult = validateUsername(elements.loginEmail.value);
   const passwordResult = validatePassword(elements.loginPassword.value);
 
   if (!usernameResult.valid) {
-    showFieldError(elements.loginUsername, 'loginUsernameError', usernameResult.error.message);
+    showFieldError(elements.loginEmail, 'loginEmailError', usernameResult.error.message);
   }
 
   if (!passwordResult.valid) {
@@ -133,7 +133,7 @@ async function submitLogin(elements) {
 
   try {
     const result = await handleLogin(
-      elements.loginUsername.value.trim(),
+      elements.loginEmail.value.trim(),
       elements.loginPassword.value
     );
 
@@ -147,11 +147,11 @@ async function submitLogin(elements) {
 }
 
 async function submitRegister(elements) {
-  hideFieldError(elements.registerUsername, 'registerUsernameError');
+  hideFieldError(elements.registerEmail, 'registerEmailError');
   hideFieldError(elements.registerPassword, 'registerPasswordError');
   hideFieldError(elements.registerConfirmPassword, 'registerConfirmError');
 
-  const usernameResult = validateUsername(elements.registerUsername.value);
+  const usernameResult = validateUsername(elements.registerEmail.value);
   const passwordResult = validatePassword(elements.registerPassword.value);
   const confirmResult = validatePasswordMatch(
     elements.registerPassword.value,
@@ -159,7 +159,7 @@ async function submitRegister(elements) {
   );
 
   if (!usernameResult.valid) {
-    showFieldError(elements.registerUsername, 'registerUsernameError', usernameResult.error.message);
+    showFieldError(elements.registerEmail, 'registerEmailError', usernameResult.error.message);
   }
 
   if (!passwordResult.valid) {
@@ -179,13 +179,13 @@ async function submitRegister(elements) {
 
   try {
     const result = await handleRegister(
-      elements.registerUsername.value.trim(),
+      elements.registerEmail.value.trim(),
       elements.registerPassword.value,
       elements.registerConfirmPassword.value
     );
 
     if (!result.success) {
-      showFieldError(elements.registerUsername, 'registerUsernameError', result.error.message);
+      showFieldError(elements.registerEmail, 'registerEmailError', result.error.message);
     }
   } finally {
     elements.registerBtn.disabled = false;
