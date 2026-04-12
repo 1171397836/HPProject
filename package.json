@@ -4,7 +4,8 @@
   "description": "铁腕 - 智能任务管理工具",
   "main": "viewer01/login.html",
   "scripts": {
-    "dev": "cd viewer01 && npx live-server --port=8080 --open=login.html"
+    "dev": "cd viewer01 && npx live-server --port=8080 --open=login.html",
+    "test": "node viewer01/scripts/smoke-test.mjs"
   },
   "keywords": [
     "task-manager",

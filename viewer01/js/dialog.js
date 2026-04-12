@@ -70,7 +70,7 @@ function createDialogTemplate({ titleId, title, panelClassName = '' }) {
   const dialogPanelClassName = `task-dialog-panel ${panelClassName}`.trim();
 
   return `
-    <div class="task-dialog-mask" data-role="mask"></div>
+    <div class="task-dialog-mask shared-overlay-mask" data-role="mask"></div>
     <div class="${dialogPanelClassName}" role="dialog" aria-modal="true" aria-labelledby="${titleId}">
       <div class="task-dialog-header">
         <h3 class="task-dialog-title" id="${titleId}">${title}</h3>

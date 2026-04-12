@@ -49,12 +49,8 @@ function saveQuadrantSelection() {
 function groupTasksByQuadrant(tasks) {
   return Object.keys(QUADRANT_CONFIG).reduce((accumulator, quadrant) => {
     const quadrantTasks = tasks
-      .filter(task => task.quadrant === quadrant)
+      .filter(task => task.quadrant === quadrant && !task.completed)
       .sort((left, right) => {
-        if (left.completed !== right.completed) {
-          return Number(left.completed) - Number(right.completed);
-        }
-
         return new Date(right.createdAt) - new Date(left.createdAt);
       });
 
@@ -110,6 +106,7 @@ async function loadTasks() {
 
     currentTasks = result.data || [];
     renderTaskMatrix();
+    renderDrawerTasks();
     updateHeaderStats();
     return true;
   } catch (error) {
@@ -178,7 +175,7 @@ function createTaskElement(task) {
 
   checkbox.addEventListener('click', event => {
     event.stopPropagation();
-    toggleTask(task._id, !task.completed);
+    toggleTask(task._id, !task.completed, taskElement, checkbox);
   });
 
   editButton.addEventListener('click', async event => {
@@ -400,6 +397,7 @@ async function addTask(content, quadrant = currentQuadrant) {
 
     currentTasks.unshift(result.data);
     renderTaskMatrix();
+    renderDrawerTasks();
     updateHeaderStats();
 
     const input = document.getElementById('taskInput');
@@ -415,11 +413,47 @@ async function addTask(content, quadrant = currentQuadrant) {
   }
 }
 
-async function toggleTask(taskId, completed) {
+async function toggleTask(taskId, completed, taskElement = null, triggerElement = null) {
+  if (completed && taskElement) {
+    if (window.confetti) {
+      const rect = triggerElement ? triggerElement.getBoundingClientRect() : taskElement.getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+      window.confetti({
+        particleCount: 20,
+        spread: 25,
+        startVelocity: 15,
+        scalar: 0.5,
+        origin: { x, y },
+        zIndex: 9999
+      });
+    }
+    
+    taskElement.style.transition = 'all 0.3s ease';
+    taskElement.style.opacity = '0';
+    taskElement.style.height = taskElement.offsetHeight + 'px';
+    
+    // Trigger reflow
+    void taskElement.offsetHeight;
+    
+    taskElement.style.height = '0';
+    taskElement.style.padding = '0';
+    taskElement.style.margin = '0';
+    taskElement.style.overflow = 'hidden';
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+
   const result = await taskDB.updateTask(taskId, completed);
 
   if (!result.success) {
     showError(result.error?.message || '更新任务状态失败');
+    if (completed && taskElement) {
+      taskElement.style.opacity = '1';
+      taskElement.style.height = 'auto';
+      taskElement.style.padding = '';
+      taskElement.style.margin = '';
+    }
     return false;
   }
 
@@ -430,6 +464,7 @@ async function toggleTask(taskId, completed) {
   ));
 
   renderTaskMatrix();
+  renderDrawerTasks();
   updateHeaderStats();
   return true;
 }
@@ -469,6 +504,7 @@ async function editTask(taskId, options = {}) {
     ));
 
     renderTaskMatrix();
+    renderDrawerTasks();
     updateHeaderStats();
     showSuccess('任务已更新');
     return true;
@@ -566,38 +602,13 @@ async function deleteTask(taskId) {
 
   currentTasks = currentTasks.filter(task => task._id !== taskId);
   renderTaskMatrix();
+  renderDrawerTasks();
   updateHeaderStats();
   showSuccess('任务已删除');
   return true;
 }
 
-async function clearCompleted() {
-  const completedCount = currentTasks.filter(task => task.completed).length;
 
-  if (completedCount === 0) {
-    showInfo('没有已完成任务');
-    return true;
-  }
-
-  const result = await confirmBeforeClearCompleted({ completedCount });
-
-  if (result?.cancelled) {
-    return false;
-  }
-
-  if (!result.success) {
-    showError(result.error?.message || '清空已完成任务失败');
-    return false;
-  }
-
-  const reloaded = await loadTasks();
-  if (!reloaded) {
-    return false;
-  }
-
-  showSuccess(`已清空 ${result.deletedCount} 个任务`);
-  return true;
-}
 
 function setCurrentQuadrant(quadrant) {
   if (!QUADRANT_CONFIG[quadrant]) {
@@ -607,6 +618,69 @@ function setCurrentQuadrant(quadrant) {
   currentQuadrant = quadrant;
   saveQuadrantSelection();
   updateQuadrantSelectorUI();
+}
+
+function renderDrawerTasks() {
+  const drawerContent = document.getElementById('drawerContent');
+  if (!drawerContent) return;
+
+  const activeTab = document.querySelector('.drawer-tab.active')?.dataset.tab || 'today';
+  
+  const completedTasks = currentTasks
+    .filter(t => t.completed)
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const startOfWeek = new Date(now);
+  const day = startOfWeek.getDay() || 7; // Convert Sunday(0) to 7
+  startOfWeek.setDate(startOfWeek.getDate() - day + 1);
+
+  const filteredTasks = completedTasks.filter(task => {
+    const taskDate = new Date(task.updatedAt || task.createdAt);
+    if (activeTab === 'today') {
+      return taskDate >= now;
+    } else if (activeTab === 'week') {
+      return taskDate >= startOfWeek && taskDate < now;
+    } else {
+      return taskDate < startOfWeek;
+    }
+  });
+
+  drawerContent.innerHTML = '';
+
+  if (filteredTasks.length === 0) {
+    drawerContent.innerHTML = '<div class="matrix-task-empty">暂无数据</div>';
+    return;
+  }
+
+  filteredTasks.forEach(task => {
+    const item = document.createElement('div');
+    item.className = 'drawer-task-item';
+    item.innerHTML = `
+      <div class="drawer-task-check done" title="标记为未完成">✓</div>
+      <div class="drawer-task-body">
+        <div class="matrix-task-text">${escapeHtml(task.content)}</div>
+        <div class="matrix-task-meta">${formatTime(task.updatedAt || task.createdAt)}</div>
+      </div>
+      <div class="matrix-task-actions">
+        <button type="button" class="matrix-action-btn" data-action="delete" title="删除任务">删</button>
+      </div>
+    `;
+
+    const checkBtn = item.querySelector('.drawer-task-check');
+    checkBtn.addEventListener('click', () => {
+      toggleTask(task._id, false);
+    });
+
+    const deleteBtn = item.querySelector('[data-action="delete"]');
+    deleteBtn.addEventListener('click', () => {
+      deleteTask(task._id);
+    });
+
+    drawerContent.appendChild(item);
+  });
 }
 
 function updateQuadrantSelectorUI() {
@@ -630,14 +704,9 @@ function updateQuadrantSelectorUI() {
 function updateHeaderStats() {
   const stats = getTaskStats();
   const badge = document.getElementById('questionsBadge');
-  const clearButton = document.getElementById('clearBtn');
 
   if (badge) {
     badge.textContent = `今日剩余 ${stats.pending} 个任务`;
-  }
-
-  if (clearButton) {
-    clearButton.textContent = stats.completed > 0 ? `清空已完成（${stats.completed}）` : '清空已完成';
   }
 
   document.title = stats.pending > 0 ? `(${stats.pending}) 铁腕 | 智能任务管理` : '铁腕 | 智能任务管理';
@@ -672,9 +741,33 @@ function bindEventListeners() {
     setCurrentQuadrant(nextQuadrant);
   });
 
-  document.getElementById('clearBtn')?.addEventListener('click', clearCompleted);
   document.getElementById('logoutBtn')?.addEventListener('click', async event => {
     await confirmBeforeLogout({ triggerElement: event.currentTarget });
+  });
+
+  // 抽屉相关事件
+  document.getElementById('menuBtn')?.addEventListener('click', () => {
+    document.getElementById('completedDrawer')?.classList.add('show');
+    document.getElementById('drawerOverlay')?.classList.add('show');
+    renderDrawerTasks();
+  });
+
+  document.getElementById('drawerCloseBtn')?.addEventListener('click', () => {
+    document.getElementById('completedDrawer')?.classList.remove('show');
+    document.getElementById('drawerOverlay')?.classList.remove('show');
+  });
+
+  document.getElementById('drawerOverlay')?.addEventListener('click', () => {
+    document.getElementById('completedDrawer')?.classList.remove('show');
+    document.getElementById('drawerOverlay')?.classList.remove('show');
+  });
+
+  document.querySelectorAll('.drawer-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      renderDrawerTasks();
+    });
   });
 
   document.querySelectorAll('.quadrant').forEach(element => {
@@ -731,31 +824,7 @@ async function confirmBeforeLogout(options = {}) {
   });
 }
 
-async function confirmBeforeClearCompleted(options = {}) {
-  const {
-    completedCount = 0,
-    message = `确定清空 ${completedCount} 个已完成任务吗？`,
-    confirmFn = null,
-    clearFn = async () => {
-      showLoading(true);
 
-      try {
-        return await taskDB.clearCompleted();
-      } finally {
-        showLoading(false);
-      }
-    }
-  } = options;
-
-  return runConfirmedAction({
-    title: '清空已完成',
-    message,
-    confirmText: '清空',
-    confirmButtonVariant: 'danger',
-    confirmFn,
-    actionFn: clearFn
-  });
-}
 
 function showLoading(loading) {
   isLoading = loading;
@@ -847,10 +916,8 @@ export {
   QUADRANT_CONFIG,
   addTask,
   collectTaskEditInput,
-  confirmBeforeClearCompleted,
   confirmBeforeDeleteTask,
   confirmBeforeLogout,
-  clearCompleted,
   currentQuadrant,
   currentTasks,
   deleteTask,
@@ -870,6 +937,5 @@ export default {
   addTask,
   toggleTask,
   editTask,
-  deleteTask,
-  clearCompleted
+  deleteTask
 };

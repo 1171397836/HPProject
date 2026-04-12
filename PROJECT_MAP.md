@@ -121,8 +121,8 @@ app.html
 - 关键 DOM：
   - `userName` / `userAvatar`
   - `logoutBtn`
+  - 左侧菜单按钮 (`menuBtn`) 和已完成任务抽屉 (`completedDrawer`)
   - `questionsBadge`
-  - `clearBtn`
   - `quadrant-1` ~ `quadrant-4`
   - `taskTypeBtn`
   - `taskInput`
@@ -138,7 +138,7 @@ app.html
 | 添加任务 | `viewer01/js/app.js` |
 | 编辑任务 | `viewer01/js/app.js`、`viewer01/js/dialog.js` |
 | 删除任务 | `viewer01/js/app.js` |
-| 清空已完成 | `viewer01/js/app.js` |
+| 侧边栏/已完成历史 | `viewer01/js/app.js` |
 | 四象限渲染 | `viewer01/js/app.js` |
 | 退出登录 | `viewer01/js/app.js`、`viewer01/js/auth.js` |
 | 通用确认弹窗 | `viewer01/js/dialog.js` 与 `viewer01/js/app.js` 调用处 |
@@ -185,7 +185,6 @@ app.html
 - 本地任务 CRUD
 - 编辑弹窗
 - 删除确认
-- 清空已完成确认
 - 退出确认
 - 四象限分组与渲染
 
@@ -259,9 +258,9 @@ app.html
 - `loadTasks`
 - `renderTaskMatrix`
 - `openStackedDialog`
-- `clearBtn`
-- `confirmBeforeClearCompleted`
 - `logoutBtn`
+- `menuBtn`
+- `completedDrawer`
 - `taskInput`
 - `quadrant-1`
 - `localStorage`
