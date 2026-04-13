@@ -199,9 +199,18 @@
 | 2 | 创建登录/注册页面与本地验证 | 工程师Agent | 已完成 |
 | 3 | 清除 CloudBase 遗留代码回退本地模式 | 工程师Agent | 已完成 |
 | 4 | 确定 Supabase 作为后端并更新数据模型 | PM | 已完成 |
-| 5 | 对接 Supabase SDK (改写 storage.js, auth.js, aiConfig.js) | 前端开发工程师 | 待开始 |
-| 6 | 测试验证（跨设备同步） | 用户+工程师Agent | 待开始 |
-| 7 | 部署上线 | 工程师Agent | 待开始 |
+| 5 | 对接 Supabase SDK (改写 storage.js, auth.js, aiConfig.js) | 前端开发工程师 | 已完成 |
+| 6 | 测试验证（跨设备同步） | 用户+工程师Agent | 已完成 |
+| 7 | 部署上线 | 用户+PM | 已完成 |
+
+---
+
+## 8.1 上线信息
+
+- **正式域名**: `ironhand.top` (已绑定 Vercel)
+- **备用域名**: `www.ironhand.top`
+- **后端服务**: Supabase (PostgreSQL + Auth)
+- **前端托管**: Vercel (全球 CDN 加速)
 
 ---
 
@@ -216,3 +225,4 @@
 | v1.4 | 2026-04-12 | 移除清空已完成功能，增加左侧抽屉历史记录，四象限仅展示未完成，完成任务增加粒子特效与淡出动画 | 前端开发工程师 |
 | v1.5 | 2026-04-12 | 抽取前端硬编码配置至 `config.js` | SOLO Coder |
 | v1.6 | 2026-04-12 | 确定采用 Supabase 作为后端，更新表结构（tasks, user_configs），移除 AI Chat 历史同步需求 | SOLO Coder |
+| v1.7 | 2026-04-12 | 成功部署上线，绑定域名 ironhand.top，实现真正的多设备云端同步 | 用户+PM |

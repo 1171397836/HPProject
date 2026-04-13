@@ -13,9 +13,10 @@
 ## 2. 项目当前状态
 
 - 项目名称：铁腕 - 智能任务管理工具
-- 当前形态：以 `viewer01/` 为主的纯前端项目
+- 当前形态：以 `viewer01/` 为主的纯前端项目，已部署至 Vercel
 - 核心业务：登录/注册、任务 CRUD、四象限展示、确认弹窗、退出登录、AI 助手
-- 即将接入 Supabase 作为云端数据同步方案 (Auth + PostgreSQL)
+- 云端后端：Supabase (Auth + PostgreSQL)，实现多设备实时同步
+- 正式域名：`ironhand.top`
 - 已完全移除 CloudBase 依赖
 
 ## 3. 仓库结构总览
@@ -54,6 +55,11 @@ HPProject/
 - 实际行为：进入 `viewer01/` 后启动静态服务
 - 默认打开页面：`viewer01/login.html`
 - 默认访问地址：`http://127.0.0.1:8080/login.html`
+
+### 5.2 线上访问
+
+- **正式域名**: `https://ironhand.top`
+- **备用域名**: `https://www.ironhand.top`
 
 ### 5.2 页面角色
 
