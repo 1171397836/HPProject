@@ -310,8 +310,7 @@ app.html
 
 ## 15. 当前已知注意点
 
-- `PRD.md` 中"项目文件结构"章节仍保留较早版本描述，与当前运行结构不完全一致
+- 由于项目在 `package.json` 中配置了 `"type": "module"`，在编写或修改 Node.js 脚本（如 `vite.config.js`）时，无法直接使用 `__dirname`，必须通过 `url` 和 `path` 模块进行显式转换。
 - 当前调研项目现状时，应优先以 `login.html`、`app.html`、`src/js/*.js` 的实际引用关系为准
-- 如果后续要继续扩展项目说明，建议将本文件作为项目地图，`PRD.md` 继续保留产品需求视角
-- Supabase 凭证不在源码中硬编码，通过 Vite 从环境变量注入到构建输出
+- Supabase 凭证不在源码中硬编码，通过 Vite 从环境变量注入到构建输出（本地为 `.env.local`，线上为 Vercel 环境变量）
 - 抽屉三个 Tab（今日/本周/历史）是互斥分类，本周 Tab 不含今日（PRD 已明确）

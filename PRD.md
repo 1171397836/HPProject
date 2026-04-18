@@ -1,8 +1,8 @@
 # 铁腕 - 智能任务管理工具 PRD
 
-> 版本: v1.5
+> 版本: v1.8
 > 创建日期: 2026-04-10  
-> 更新日期: 2026-04-12  
+> 更新日期: 2026-04-18  
 > 维护者: SOLO Coder (AI Agent)
 
 ---
@@ -91,7 +91,7 @@
 
 | 层级 | 技术 | 说明 |
 |------|------|------|
-| 前端 | HTML5 + CSS3 + ES6 | 原生前端技术实现 |
+| 前端 | HTML5 + CSS3 + ES6 + Vite | 基于 Vite 的现代原生前端架构构建打包 |
 | 存储 | Supabase | 提供 Auth 和 Database，实现云端多端同步 |
 | 部署 | Vercel (Static) | 采用 Vercel 静态托管部署，构建发布 `dist` 目录 |
 
@@ -202,6 +202,7 @@
 | 5 | 对接 Supabase SDK (改写 storage.js, auth.js, aiConfig.js) | 前端开发工程师 | 已完成 |
 | 6 | 测试验证（跨设备同步） | 用户+工程师Agent | 已完成 |
 | 7 | 部署上线 | 用户+PM | 已完成 |
+| 8 | 将项目结构重构为标准 Vite 架构 | PM+工程师Agent | 已完成 |
 
 ---
 
@@ -226,3 +227,4 @@
 | v1.5 | 2026-04-12 | 抽取前端硬编码配置至 `config.js` | SOLO Coder |
 | v1.6 | 2026-04-12 | 确定采用 Supabase 作为后端，更新表结构（tasks, user_configs），移除 AI Chat 历史同步需求 | SOLO Coder |
 | v1.7 | 2026-04-12 | 成功部署上线，绑定域名 ironhand.top，实现真正的多设备云端同步 | 用户+PM |
+| v1.8 | 2026-04-18 | 重构为标准 Vite 项目，统一源码至 src/，适配 Vercel 静态输出 | SOLO Coder |
