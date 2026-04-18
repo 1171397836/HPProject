@@ -93,7 +93,7 @@
 |------|------|------|
 | 前端 | HTML5 + CSS3 + ES6 | 原生前端技术实现 |
 | 存储 | Supabase | 提供 Auth 和 Database，实现云端多端同步 |
-| 部署 | Vercel (Static) | 采用 Vercel 静态托管部署，发布 `viewer01` 目录 |
+| 部署 | Vercel (Static) | 采用 Vercel 静态托管部署，构建发布 `dist` 目录 |
 
 ### 3.3 数据模型
 

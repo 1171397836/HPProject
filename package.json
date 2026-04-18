@@ -2,11 +2,13 @@
   "name": "tiewan-task-manager",
   "version": "1.0.0",
   "description": "铁腕 - 智能任务管理工具",
-  "main": "viewer01/login.html",
+  "main": "index.html",
+  "type": "module",
   "scripts": {
-    "build": "node scripts/build.js",
-    "dev": "npm run build && cd viewer01-dist && npx live-server --port=8080 --open=login.html",
-    "test": "node viewer01/scripts/smoke-test.mjs"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node src/scripts/smoke-test.mjs"
   },
   "keywords": [
     "task-manager",
@@ -15,6 +17,10 @@
   "author": "铁腕团队",
   "license": "MIT",
   "devDependencies": {
-    "live-server": "^1.2.2"
+    "dotenv": "^17.4.2",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3"
   }
 }
