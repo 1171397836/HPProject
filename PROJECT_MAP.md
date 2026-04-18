@@ -26,25 +26,35 @@ HPProject/
 ├── PROJECT_MAP.md
 ├── PRD.md
 ├── package.json
-└── viewer01/
-    ├── app.html
-    ├── index.html
-    ├── login.html
-    ├── motherduck.html
-    ├── Design.md
-    ├── package.json
-    ├── css/
-    ├── js/
-    └── scripts/
+├── vercel.json
+├── .env.local          ← 本地开发凭证（.gitignore）
+├── .gitignore
+├── scripts/
+│   └── build.js        ← 构建脚本：viewer01 → viewer01-dist，注入环境变量
+├── viewer01/           ← 源码目录（占位符，不含真实凭证）
+│   ├── app.html
+│   ├── index.html
+│   ├── login.html
+│   ├── motherduck.html
+│   ├── Design.md
+│   ├── package.json
+│   ├── css/
+│   ├── js/
+│   └── scripts/
+└── viewer01-dist/      ← 构建输出（.gitignore，含真实凭证）
 ```
 
 ## 4. 顶层文件职责
 
 | 路径 | 作用 |
 |------|------|
-| `package.json` | 根启动入口、项目元信息 |
+| `package.json` | 根启动入口、项目元信息、构建脚本 |
 | `PRD.md` | 产品需求文档，偏产品视角 |
-| `viewer01/` | 实际前端应用目录 |
+| `vercel.json` | Vercel 部署配置（build 命令、输出目录） |
+| `.env.local` | 本地开发 Supabase 凭证（不提交到 git） |
+| `scripts/build.js` | 构建脚本：复制 viewer01 → viewer01-dist，替换占位符为真实凭证 |
+| `viewer01/` | 实际前端应用源码目录（含占位符） |
+| `viewer01-dist/` | 构建输出目录（含真实凭证，不提交到 git） |
 
 ## 5. 运行入口
 
@@ -52,9 +62,18 @@ HPProject/
 
 - **一键启动 (推荐)**：双击运行根目录的 `start.bat`
 - 命令行启动：根目录执行 `npm run dev`
-- 实际行为：进入 `viewer01/` 后启动静态服务
-- 默认打开页面：`viewer01/login.html`
+- 实际行为：先执行 `npm run build`（将 viewer01 复制到 viewer01-dist 并注入凭证），再启动 viewer01-dist 的静态服务
+- 默认打开页面：`viewer01-dist/login.html`
 - 默认访问地址：`http://127.0.0.1:8080/login.html`
+
+### 5.2 构建与部署
+
+- **构建命令**：`npm run build`
+- **构建流程**：`scripts/build.js` 将 `viewer01/` 复制到 `viewer01-dist/`，并将 `supabaseClient.js` 中的占位符替换为真实值
+- **环境变量来源**：
+  - Vercel 部署时：从 Vercel Dashboard 环境变量读取 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`
+  - 本地开发时：从项目根目录 `.env.local` 文件读取
+- **部署平台**：Vercel，自动执行构建，输出目录为 `viewer01-dist`
 
 ### 5.2 线上访问
 
@@ -92,10 +111,13 @@ app.html
 | 文件 | 职责 | 什么时候先看它 |
 |------|------|----------------|
 | `viewer01/js/config.js` | 全局配置（环境判断、API 地址、LocalStorage 键名等） | 涉及环境变量、存储键名、接口地址变更时 |
+| `viewer01/js/supabaseClient.js` | Supabase 客户端初始化（源码中为占位符，构建时注入真实值） | Supabase 连接异常、凭证配置问题 |
 | `viewer01/js/login.js` | 登录/注册页控制、表单校验、提交逻辑、已登录跳转 | 登录页交互异常、表单校验异常 |
 | `viewer01/js/app.js` | 应用页初始化、任务渲染、增删改查、象限切换、统计、清空已完成、退出流程 | 任务页任何核心功能异常 |
 | `viewer01/js/auth.js` | 认证状态、登录注册、鉴权守卫、用户展示、退出登录 | 登录态异常、跳转异常、用户信息异常 |
-| `viewer01/js/storage.js` | 任务数据访问层，纯本地 localStorage 模式 | 任务数据读写异常、存储模式问题 |
+| `viewer01/js/storage.js` | 任务数据访问层（Supabase PostgreSQL） | 任务数据读写异常、数据库查询问题 |
+| `viewer01/js/aiConfig.js` | AI 配置管理（提供商、API Key、模型选择），存储到 Supabase user_configs | AI 功能配置异常 |
+| `viewer01/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出） | AI 对话功能异常 |
 | `viewer01/js/dialog.js` | 通用弹窗与堆叠弹窗能力 | 编辑任务弹窗、确认弹窗异常 |
 
 ### 6.2 历史/草稿文件
@@ -149,24 +171,27 @@ app.html
 | 四象限渲染 | `viewer01/js/app.js` |
 | 退出登录 | `viewer01/js/app.js`、`viewer01/js/auth.js` |
 | 通用确认弹窗 | `viewer01/js/dialog.js` 与 `viewer01/js/app.js` 调用处 |
+| AI 助手对话 | `viewer01/js/aiChat.js`、`viewer01/js/aiConfig.js` |
+| 构建与部署 | `scripts/build.js`、`vercel.json` |
 
 ## 9. 数据与状态
 
 ### 9.1 认证
 
 - `auth.js` 统一处理认证逻辑
-- 即将接入 Supabase Auth，替代当前的 localStorage 模拟登录
+- 使用 Supabase Auth 实现邮箱+密码登录注册
+- Supabase 凭证通过环境变量注入，不硬编码在源码中
 
 ### 9.2 任务数据
 
-- `storage.js` 是唯一任务数据访问层
-- 即将接入 Supabase Database，替代 localStorage
+- `storage.js` 是唯一任务数据访问层，使用 Supabase PostgreSQL 存储
 - 任务字段核心包括：
   - `id` (UUID)
   - `user_id`
   - `content`
   - `quadrant`
   - `completed`
+  - `completed_at` (任务完成时间，用于抽屉时间分类)
   - `created_at`
   - `updated_at`
 
@@ -199,7 +224,8 @@ app.html
 
 | 入口 | 用途 |
 |------|------|
-| `npm run dev` | 启动本地测试环境 |
+| `npm run dev` | 构建并启动本地测试环境 |
+| `npm run build` | 仅构建（viewer01 → viewer01-dist，注入环境变量） |
 
 ## 12. 常见排查路径
 
@@ -270,7 +296,9 @@ app.html
 - `completedDrawer`
 - `taskInput`
 - `quadrant-1`
-- `localStorage`
+- `supabase`
+- `__SUPABASE_URL__`
+- `__SUPABASE_ANON_KEY__`
 
 ## 14. 文档维护约定
 
@@ -285,6 +313,8 @@ app.html
 
 ## 15. 当前已知注意点
 
-- `PRD.md` 中“项目文件结构”章节仍保留较早版本描述，与当前运行结构不完全一致
+- `PRD.md` 中"项目文件结构"章节仍保留较早版本描述，与当前运行结构不完全一致
 - 当前调研项目现状时，应优先以 `viewer01/login.html`、`viewer01/app.html`、`viewer01/js/*.js` 的实际引用关系为准
 - 如果后续要继续扩展项目说明，建议将本文件作为项目地图，`PRD.md` 继续保留产品需求视角
+- Supabase 凭证不在源码中硬编码，通过 `scripts/build.js` 从环境变量注入到构建输出
+- 抽屉三个 Tab（今日/本周/历史）是互斥分类，本周 Tab 不含今日（PRD 已明确）

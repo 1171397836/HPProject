@@ -1079,7 +1079,7 @@ function renderDrawerTasks() {
   
   const completedTasks = currentTasks
     .filter(t => t.completed)
-    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+    .sort((a, b) => new Date(b.completedAt || b.updatedAt || b.createdAt) - new Date(a.completedAt || a.updatedAt || a.createdAt));
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -1089,7 +1089,7 @@ function renderDrawerTasks() {
   startOfWeek.setDate(startOfWeek.getDate() - day + 1);
 
   const filteredTasks = completedTasks.filter(task => {
-    const taskDate = new Date(task.updatedAt || task.createdAt);
+    const taskDate = new Date(task.completedAt || task.updatedAt || task.createdAt);
     if (activeTab === 'today') {
       return taskDate >= now;
     } else if (activeTab === 'week') {

@@ -66,7 +66,8 @@ function normalizeTask(task) {
     _id: task.id, // map Supabase id to _id for frontend compatibility
     uid: task.user_id, // map user_id to uid
     createdAt: task.created_at || new Date().toISOString(),
-    updatedAt: task.updated_at || new Date().toISOString()
+    updatedAt: task.updated_at || new Date().toISOString(),
+    completedAt: task.completed_at || null
   };
 }
 
@@ -193,7 +194,17 @@ const taskDB = {
     }
 
     const sanitizedUpdates = {};
-    if (updateData.completed !== undefined) sanitizedUpdates.completed = updateData.completed;
+    if (updateData.completed !== undefined) {
+      sanitizedUpdates.completed = updateData.completed;
+      // 当任务标记为完成时，同步更新 completed_at 字段
+      if (updateData.completed === true) {
+        sanitizedUpdates.completed_at = new Date().toISOString();
+      } else if (updateData.completed === false) {
+        // 注意：将 completed_at 设为 null 依赖数据库 completed_at 列允许 NULL 值。
+        // 如果列定义为 NOT NULL，则需要改为设为空字符串或其他默认值。
+        sanitizedUpdates.completed_at = null;
+      }
+    }
     if (updateData.quadrant !== undefined) sanitizedUpdates.quadrant = updateData.quadrant;
     if (contentValidation) {
       sanitizedUpdates.content = contentValidation.normalizedContent;
