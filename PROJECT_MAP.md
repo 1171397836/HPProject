@@ -113,8 +113,9 @@ app.html
 | `src/js/auth.js` | 认证状态、登录注册、鉴权守卫、用户展示、退出登录 | 登录态异常、跳转异常、用户信息异常 |
 | `src/js/storage.js` | 任务数据访问层（Supabase PostgreSQL） | 任务数据读写异常、数据库查询问题 |
 | `src/js/aiConfig.js` | AI 配置管理（提供商、API Key、模型选择），存储到 Supabase user_configs | AI 功能配置异常 |
-| `src/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出） | AI 对话功能异常 |
+| `src/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出、localStorage 持久化） | AI 对话功能异常、聊天记录不保存 |
 | `src/js/dialog.js` | 通用弹窗与堆叠弹窗能力 | 编辑任务弹窗、确认弹窗异常 |
+| `src/js/drawerController.js` | 侧边栏抽屉控制（打开/关闭/Tab切换/任务渲染），历史已完成Tab的年→月→周三级折叠 | 抽屉交互异常、历史折叠分组异常 |
 
 ### 6.2 历史/草稿文件
 
@@ -163,7 +164,7 @@ app.html
 | 添加任务 | `src/js/app.js` |
 | 编辑任务 | `src/js/app.js`、`src/js/dialog.js` |
 | 删除任务 | `src/js/app.js` |
-| 侧边栏/已完成历史 | `src/js/app.js` |
+| 侧边栏/已完成历史 | `src/js/drawerController.js`、`src/js/app.js` |
 | 四象限渲染 | `src/js/app.js` |
 | 退出登录 | `src/js/app.js`、`src/js/auth.js` |
 | 通用确认弹窗 | `src/js/dialog.js` 与 `src/js/app.js` 调用处 |

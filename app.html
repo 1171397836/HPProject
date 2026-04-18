@@ -686,6 +686,92 @@
             color: #fff;
         }
 
+        /* 抽屉折叠组样式 */
+        .drawer-collapse-group {
+            margin-bottom: 2px;
+        }
+        .drawer-collapse-group .drawer-collapse-group {
+            margin-bottom: 0;
+        }
+
+        .drawer-collapse-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.15s ease;
+            user-select: none;
+        }
+        .drawer-collapse-header:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+        .drawer-collapse-header[data-level="year"] {
+            padding-left: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+        .drawer-collapse-header[data-level="month"] {
+            padding-left: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+        .drawer-collapse-header[data-level="week"] {
+            padding-left: 32px;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--color-text-secondary);
+        }
+
+        .drawer-collapse-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            color: var(--color-text-muted);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+            margin-right: 4px;
+        }
+        .drawer-collapse-group.expanded > .drawer-collapse-header .drawer-collapse-arrow {
+            transform: rotate(90deg);
+        }
+
+        .drawer-collapse-title {
+            flex: 1;
+        }
+
+        .drawer-collapse-count {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            background: rgba(0, 0, 0, 0.04);
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+
+        .drawer-collapse-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .drawer-collapse-group.expanded > .drawer-collapse-body {
+            max-height: 2000px;
+        }
+
+        /* 折叠组内的任务项间距调整 */
+        .drawer-collapse-body .drawer-task-item {
+            margin-bottom: 8px;
+        }
+        .drawer-collapse-body .drawer-task-item:last-child {
+            margin-bottom: 8px;
+        }
+
         /* ============================================
            AI 助手相关样式
            ============================================ */
