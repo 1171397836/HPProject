@@ -415,6 +415,37 @@
             line-height: 1.5;
         }
 
+        /* 输入框容器 - 为字数统计留出空间 */
+        .task-dialog-input-wrapper {
+            position: relative;
+        }
+
+        /* 字数统计样式 */
+        .char-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 11px;
+            color: var(--color-text-muted, #9ca3af);
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 字数警告状态 - 超过80% */
+        .char-counter.warning {
+            color: #f97316;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        /* 字数危险状态 - 达到上限 */
+        .char-counter.danger {
+            color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+
         .task-dialog-input:focus,
         .task-dialog-select:focus {
             border-color: rgba(249, 115, 22, 0.7);

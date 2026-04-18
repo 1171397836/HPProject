@@ -220,6 +220,16 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
         maxlength="${MAX_TASK_LENGTH}"
         placeholder="请输入任务内容"
       ></textarea>
+      <div class="task-dialog-char-count" id="taskContentCharCount">0/${MAX_TASK_LENGTH}</div>
+      <label class="task-dialog-label" for="taskEditNote">任务备注</label>
+      <textarea
+        id="taskEditNote"
+        class="task-dialog-input"
+        rows="3"
+        maxlength="100"
+        placeholder="添加任务备注（可选）"
+      ></textarea>
+      <div class="task-dialog-char-count" id="taskNoteCharCount">0/100</div>
       <label class="task-dialog-label" for="taskEditQuadrant">任务象限</label>
       <select id="taskEditQuadrant" class="task-dialog-select">
         ${Object.entries(QUADRANT_CONFIG).map(([value, config]) => `<option value="${value}">${config.shortCode} · ${config.label}</option>`).join('')}
@@ -233,13 +243,40 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
   `, element => {
     const form = element;
     const content = element.querySelector('#taskEditContent');
+    const note = element.querySelector('#taskEditNote');
+    const contentCharCount = element.querySelector('#taskContentCharCount');
+    const noteCharCount = element.querySelector('#taskNoteCharCount');
     const quadrant = element.querySelector('#taskEditQuadrant');
     const error = element.querySelector('[data-role="error"]');
     const cancelButton = element.querySelector('[data-role="cancel"]');
 
     content.value = task.content || '';
+    note.value = task.notes || '';
     quadrant.value = QUADRANT_CONFIG[task.quadrant] ? task.quadrant : defaultQuadrant;
     error.textContent = '';
+
+    // 更新字数统计显示
+    const updateCharCount = (input, countElement, maxLength) => {
+      const currentLength = input.value.length;
+      countElement.textContent = `${currentLength}/${maxLength}`;
+      // 当字数接近上限时改变颜色提示
+      if (currentLength >= maxLength * 0.9) {
+        countElement.classList.add('warning');
+      } else {
+        countElement.classList.remove('warning');
+      }
+    };
+
+    // 初始化字数统计
+    updateCharCount(content, contentCharCount, MAX_TASK_LENGTH);
+    updateCharCount(note, noteCharCount, 100);
+
+    // 监听输入事件，实时更新字数显示
+    const handleContentInput = () => updateCharCount(content, contentCharCount, MAX_TASK_LENGTH);
+    const handleNoteInput = () => updateCharCount(note, noteCharCount, 100);
+
+    content.addEventListener('input', handleContentInput);
+    note.addEventListener('input', handleNoteInput);
 
     const handleCancel = () => {
       close({ cancelled: true });
@@ -250,6 +287,7 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
 
       const nextContent = content.value.trim();
       const nextQuadrant = quadrant.value.trim().toLowerCase();
+      const nextNote = note.value.trim();
       const validation = validateTaskContent(nextContent);
 
       if (!validation.valid) {
@@ -267,7 +305,8 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
       close({
         cancelled: false,
         content: validation.normalizedContent,
-        quadrant: nextQuadrant
+        quadrant: nextQuadrant,
+        notes: nextNote
       });
     };
 
@@ -278,6 +317,8 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
       cleanup: () => {
         cancelButton.removeEventListener('click', handleCancel);
         form.removeEventListener('submit', handleSubmit);
+        content.removeEventListener('input', handleContentInput);
+        note.removeEventListener('input', handleNoteInput);
       },
       focusTarget: content
     };
@@ -378,7 +419,8 @@ async function editTask(taskId, options = {}) {
 
     const result = await taskDB.updateTaskContent(taskId, {
       content: editResult.content,
-      quadrant: editResult.quadrant
+      quadrant: editResult.quadrant,
+      notes: editResult.notes
     });
 
     if (!result.success) {
@@ -392,6 +434,7 @@ async function editTask(taskId, options = {}) {
             ...item,
             content: editResult.content,
             quadrant: editResult.quadrant,
+            notes: editResult.notes,
             updatedAt: result.data?.updatedAt || new Date().toISOString()
           }
         : item
@@ -548,6 +591,64 @@ async function confirmBeforeDeleteTask(options = {}) {
 }
 
 /**
+ * 移动任务到指定象限
+ * @param {string} taskId - 任务ID
+ * @param {string} targetQuadrant - 目标象限
+ * @returns {Promise<boolean>} 是否移动成功
+ */
+async function moveTask(taskId, targetQuadrant) {
+  if (!taskId || (typeof taskId !== 'string' && typeof taskId !== 'number')) {
+    showError('任务ID不能为空');
+    return false;
+  }
+
+  if (!QUADRANT_CONFIG[targetQuadrant]) {
+    showError('无效的象限选择');
+    return false;
+  }
+
+  const task = currentTasks.find(item => item._id === taskId);
+  if (!task) {
+    showError('任务不存在');
+    return false;
+  }
+
+  // 如果已经在目标象限，不需要移动
+  if (task.quadrant === targetQuadrant) {
+    return true;
+  }
+
+  try {
+    const result = await taskDB.updateTaskContent(taskId, {
+      quadrant: targetQuadrant
+    });
+
+    if (!result.success) {
+      showError(result.error?.message || '移动任务失败');
+      return false;
+    }
+
+    // 更新本地任务数据
+    currentTasks = currentTasks.map(item => (
+      item._id === taskId
+        ? {
+            ...item,
+            quadrant: targetQuadrant,
+            updatedAt: result.data?.updatedAt || new Date().toISOString()
+          }
+        : item
+    ));
+
+    showSuccess(`任务已移动到${QUADRANT_CONFIG[targetQuadrant].label}`);
+    return true;
+  } catch (error) {
+    console.error('[TaskController] 移动任务失败', error);
+    showError('移动任务失败，请稍后重试');
+    return false;
+  }
+}
+
+/**
  * 删除任务
  * @param {string} taskId - 任务ID
  * @returns {Promise<boolean>} 是否删除成功
@@ -593,6 +694,7 @@ export {
   getTaskStats,
   groupTasksByQuadrant,
   loadTasks,
+  moveTask,
   runConfirmedAction,
   setCurrentTasks,
   toggleTask,
@@ -604,6 +706,7 @@ export default {
   toggleTask,
   editTask,
   deleteTask,
+  moveTask,
   loadTasks,
   getCurrentTasks,
   setCurrentTasks,

@@ -17,6 +17,7 @@ import {
   getCurrentTasks,
   getTaskStats,
   loadTasks,
+  moveTask,
   runConfirmedAction,
   setCurrentTasks,
   toggleTask
@@ -101,7 +102,8 @@ async function refreshTasks() {
       renderTaskMatrix(tasks, {
         onToggle: handleToggleTask,
         onEdit: handleEditTask,
-        onDelete: handleDeleteTask
+        onDelete: handleDeleteTask,
+        onDragEnd: handleDragEnd
       });
       renderDrawerTasks(tasks, {
         onToggleTask: handleToggleTask,
@@ -128,7 +130,8 @@ async function handleToggleTask(taskId, completed, taskElement, triggerElement) 
     renderTaskMatrix(tasks, {
       onToggle: handleToggleTask,
       onEdit: handleEditTask,
-      onDelete: handleDeleteTask
+      onDelete: handleDeleteTask,
+      onDragEnd: handleDragEnd
     });
     renderDrawerTasks(tasks, {
       onToggleTask: handleToggleTask,
@@ -149,7 +152,8 @@ async function handleEditTask(taskId) {
     renderTaskMatrix(tasks, {
       onToggle: handleToggleTask,
       onEdit: handleEditTask,
-      onDelete: handleDeleteTask
+      onDelete: handleDeleteTask,
+      onDragEnd: handleDragEnd
     });
     renderDrawerTasks(tasks, {
       onToggleTask: handleToggleTask,
@@ -171,7 +175,30 @@ async function handleDeleteTask(taskId) {
     renderTaskMatrix(tasks, {
       onToggle: handleToggleTask,
       onEdit: handleEditTask,
-      onDelete: handleDeleteTask
+      onDelete: handleDeleteTask,
+      onDragEnd: handleDragEnd
+    });
+    renderDrawerTasks(tasks, {
+      onToggleTask: handleToggleTask,
+      onDeleteTask: handleDeleteTask
+    });
+    updateHeaderStats(getTaskStats().pending);
+  }
+}
+
+/**
+ * 处理拖拽移动任务
+ */
+async function handleDragEnd(taskId, targetQuadrant) {
+  const success = await moveTask(taskId, targetQuadrant);
+  if (success) {
+    const tasks = getCurrentTasks();
+    setAITasks(tasks);
+    renderTaskMatrix(tasks, {
+      onToggle: handleToggleTask,
+      onEdit: handleEditTask,
+      onDelete: handleDeleteTask,
+      onDragEnd: handleDragEnd
     });
     renderDrawerTasks(tasks, {
       onToggleTask: handleToggleTask,
@@ -199,7 +226,8 @@ async function handleAddTask() {
     renderTaskMatrix(tasks, {
       onToggle: handleToggleTask,
       onEdit: handleEditTask,
-      onDelete: handleDeleteTask
+      onDelete: handleDeleteTask,
+      onDragEnd: handleDragEnd
     });
     renderDrawerTasks(tasks, {
       onToggleTask: handleToggleTask,

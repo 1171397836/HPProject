@@ -116,7 +116,7 @@ function showToast(message, type = 'info') {
     container = document.createElement('div');
     container.id = 'toastContainer';
     container.style.position = 'fixed';
-    container.style.top = '16px';
+    container.style.top = '80px';
     container.style.right = '16px';
     container.style.zIndex = '9999';
     container.style.display = 'flex';
@@ -247,27 +247,52 @@ function updateHeaderStats(pendingCount) {
  * @returns {HTMLElement} 任务元素
  */
 function createTaskElement(task, callbacks = {}) {
-  const { onToggle, onEdit, onDelete } = callbacks;
+  const { onToggle, onEdit, onDelete, onDragEnd } = callbacks;
+  const hasNotes = task.notes && String(task.notes).trim().length > 0;
 
   const taskElement = document.createElement('div');
   taskElement.className = `matrix-task-item ${task.completed ? 'is-completed' : ''}`;
   taskElement.dataset.taskId = task._id;
+  taskElement.dataset.quadrant = task.quadrant;
+  taskElement.draggable = true;
+
+  // 构建任务内容HTML
+  let notesHtml = '';
+  if (hasNotes) {
+    notesHtml = `
+      <div class="matrix-task-notes" style="display: none; margin-top: 4px; padding-left: 24px; font-size: 12px; color: #6b7280; line-height: 1.4;">
+        ${escapeHtml(task.notes)}
+      </div>
+    `;
+  }
 
   taskElement.innerHTML = `
     <button class="matrix-task-check ${task.completed ? 'done' : 'pending'}" type="button" title="${task.completed ? '标记为未完成' : '标记为完成'}">
       ${task.completed ? '✓' : '○'}
     </button>
-    <div class="matrix-task-text">${escapeHtml(task.content)}</div>
+    <div class="matrix-task-content" style="flex: 1; min-width: 0;">
+      <div class="matrix-task-text" style="display: flex; align-items: center; gap: 6px;">
+        ${escapeHtml(task.content)}
+        ${hasNotes ? `<span class="matrix-task-notes-icon" style="cursor: pointer; font-size: 14px; user-select: none;" title="点击查看备注">💬</span>` : ''}
+      </div>
+      ${notesHtml}
+    </div>
     <div class="matrix-task-actions">
-      <button type="button" class="matrix-action-btn" data-action="edit" title="编辑任务">编</button>
-      <button type="button" class="matrix-action-btn" data-action="delete" title="删除任务">删</button>
+      <button type="button" class="matrix-action-btn matrix-action-delete" data-action="delete" title="删除任务">×</button>
     </div>
   `;
 
   const checkbox = taskElement.querySelector('.matrix-task-check');
-  const editButton = taskElement.querySelector('[data-action="edit"]');
   const deleteButton = taskElement.querySelector('[data-action="delete"]');
+  const notesIcon = taskElement.querySelector('.matrix-task-notes-icon');
+  const notesContent = taskElement.querySelector('.matrix-task-notes');
 
+  // 拖拽状态标记
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+
+  // 复选框点击事件
   checkbox.addEventListener('click', event => {
     event.stopPropagation();
     if (onToggle) {
@@ -275,18 +300,65 @@ function createTaskElement(task, callbacks = {}) {
     }
   });
 
-  editButton.addEventListener('click', async event => {
-    event.stopPropagation();
-    if (onEdit) {
-      await onEdit(task._id);
-    }
-  });
-
+  // 删除按钮点击事件
   deleteButton.addEventListener('click', async event => {
     event.stopPropagation();
     if (onDelete) {
       await onDelete(task._id);
     }
+  });
+
+  // 备注图标点击事件 - 展开/收起备注
+  if (notesIcon && notesContent) {
+    notesIcon.addEventListener('click', event => {
+      event.stopPropagation();
+      const isVisible = notesContent.style.display !== 'none';
+      notesContent.style.display = isVisible ? 'none' : 'block';
+      notesIcon.title = isVisible ? '点击查看备注' : '点击收起备注';
+    });
+  }
+
+  // 卡片点击事件 - 编辑任务（排除复选框、删除按钮、备注图标）
+  taskElement.addEventListener('click', async event => {
+    // 如果正在拖拽，不触发编辑
+    if (isDragging) {
+      return;
+    }
+    // 检查点击目标是否在排除元素内
+    if (event.target.closest('.matrix-task-check') ||
+        event.target.closest('.matrix-action-btn') ||
+        event.target.closest('.matrix-task-notes-icon')) {
+      return;
+    }
+    if (onEdit) {
+      await onEdit(task._id);
+    }
+  });
+
+  // 拖拽事件
+  taskElement.addEventListener('dragstart', event => {
+    isDragging = true;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    taskElement.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', task._id);
+    // 延迟添加半透明效果，避免拖拽预览图也半透明
+    setTimeout(() => {
+      taskElement.classList.add('dragging-ghost');
+    }, 0);
+  });
+
+  taskElement.addEventListener('dragend', () => {
+    taskElement.classList.remove('dragging', 'dragging-ghost');
+    // 清除所有象限的高亮
+    document.querySelectorAll('.quadrant').forEach(quadrant => {
+      quadrant.classList.remove('drag-over');
+    });
+    // 延迟重置拖拽状态，避免点击事件被触发
+    setTimeout(() => {
+      isDragging = false;
+    }, 100);
   });
 
   return taskElement;
@@ -301,6 +373,8 @@ function renderTaskMatrix(tasks, callbacks = {}) {
   if (typeof document === 'undefined') {
     return;
   }
+
+  const { onDragEnd } = callbacks;
 
   // 按象限分组
   const buckets = Object.keys(QUADRANT_CONFIG).reduce((accumulator, quadrant) => {
@@ -336,7 +410,77 @@ function renderTaskMatrix(tasks, callbacks = {}) {
     });
   });
 
+  // 为象限容器添加拖拽事件
+  setupQuadrantDragEvents(onDragEnd);
+
   updateQuadrantSelectorUI();
+}
+
+// 用于存储拖拽事件处理函数的 WeakMap，避免内存泄漏
+const dragEventHandlers = new WeakMap();
+
+/**
+ * 设置象限容器的拖拽事件
+ * @param {Function} onDragEnd - 拖拽完成回调
+ */
+function setupQuadrantDragEvents(onDragEnd) {
+  document.querySelectorAll('.quadrant').forEach(quadrant => {
+    const quadrantId = quadrant.dataset.quadrant;
+    if (!quadrantId) return;
+
+    // 如果已经绑定过事件，先移除旧的事件监听器
+    const existingHandlers = dragEventHandlers.get(quadrant);
+    if (existingHandlers) {
+      quadrant.removeEventListener('dragover', existingHandlers.dragover);
+      quadrant.removeEventListener('dragleave', existingHandlers.dragleave);
+      quadrant.removeEventListener('drop', existingHandlers.drop);
+    }
+
+    // 创建新的事件处理函数
+    const dragoverHandler = event => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      quadrant.classList.add('drag-over');
+    };
+
+    const dragleaveHandler = event => {
+      // 只有当离开象限本身时才移除高亮（不是子元素）
+      if (!quadrant.contains(event.relatedTarget)) {
+        quadrant.classList.remove('drag-over');
+      }
+    };
+
+    const dropHandler = async event => {
+      event.preventDefault();
+      quadrant.classList.remove('drag-over');
+
+      const taskId = event.dataTransfer.getData('text/plain');
+      if (!taskId || !onDragEnd) return;
+
+      // 找到拖拽的任务元素
+      const draggedElement = document.querySelector(`[data-task-id="${taskId}"]`);
+      if (!draggedElement) return;
+
+      const sourceQuadrant = draggedElement.dataset.quadrant;
+      // 如果拖拽到相同象限，不执行操作
+      if (sourceQuadrant === quadrantId) return;
+
+      // 调用回调更新任务象限
+      await onDragEnd(taskId, quadrantId);
+    };
+
+    // 绑定新的事件监听器
+    quadrant.addEventListener('dragover', dragoverHandler);
+    quadrant.addEventListener('dragleave', dragleaveHandler);
+    quadrant.addEventListener('drop', dropHandler);
+
+    // 存储处理函数引用，以便下次移除
+    dragEventHandlers.set(quadrant, {
+      dragover: dragoverHandler,
+      dragleave: dragleaveHandler,
+      drop: dropHandler
+    });
+  });
 }
 
 export {
@@ -352,6 +496,7 @@ export {
   restoreQuadrantSelection,
   saveQuadrantSelection,
   setCurrentQuadrant,
+  setupQuadrantDragEvents,
   showError,
   showInfo,
   showLoading,
@@ -377,5 +522,6 @@ export default {
   getCurrentQuadrant,
   setCurrentQuadrant,
   restoreQuadrantSelection,
-  saveQuadrantSelection
+  saveQuadrantSelection,
+  setupQuadrantDragEvents
 };

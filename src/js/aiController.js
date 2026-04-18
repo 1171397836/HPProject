@@ -260,7 +260,7 @@ function renderAIChatMessages(messages, options = {}) {
 
     if (msg.type === MESSAGE_TYPE.USER) {
       avatarText = currentUser?.username?.charAt(0).toUpperCase() || 'U';
-      contentHtml = escapeHtml(msg.content);
+      contentHtml = `<div class="ai-message-content">${escapeHtml(msg.content)}</div>`;
     } else if (msg.type === MESSAGE_TYPE.AI) {
       avatarText = 'AI';
       // 检查是否正在生成这条消息

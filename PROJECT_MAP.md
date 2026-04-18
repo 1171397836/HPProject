@@ -114,7 +114,8 @@ app.html
 | `src/js/storage.js` | 任务数据访问层（Supabase PostgreSQL） | 任务数据读写异常、数据库查询问题 |
 | `src/js/aiConfig.js` | AI 配置管理（提供商、API Key、模型选择），存储到 Supabase user_configs | AI 功能配置异常 |
 | `src/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出、localStorage 持久化） | AI 对话功能异常、聊天记录不保存 |
-| `src/js/dialog.js` | 通用弹窗与堆叠弹窗能力 | 编辑任务弹窗、确认弹窗异常 |
+| `src/js/taskController.js` | 任务编辑对话框、确认对话框、任务CRUD控制逻辑 | 编辑任务弹窗、任务备注功能异常 |
+| `src/js/dialog.js` | 通用弹窗与堆叠弹窗能力底层支持 | 弹窗栈、对话框渲染异常 |
 | `src/js/drawerController.js` | 侧边栏抽屉控制（打开/关闭/Tab切换/任务渲染），历史已完成Tab的年→月→周三级折叠 | 抽屉交互异常、历史折叠分组异常 |
 
 ### 6.2 历史/草稿文件
@@ -162,7 +163,7 @@ app.html
 | 登录态校验 | `src/js/auth.js` |
 | 任务加载 | `src/js/app.js`、`src/js/storage.js` |
 | 添加任务 | `src/js/app.js` |
-| 编辑任务 | `src/js/app.js`、`src/js/dialog.js` |
+| 编辑任务 | `src/js/app.js`、`src/js/taskController.js`、`src/js/dialog.js` |
 | 删除任务 | `src/js/app.js` |
 | 侧边栏/已完成历史 | `src/js/drawerController.js`、`src/js/app.js` |
 | 四象限渲染 | `src/js/app.js` |
@@ -185,9 +186,10 @@ app.html
 - 任务字段核心包括：
   - `id` (UUID)
   - `user_id`
-  - `content`
+  - `content` (任务内容，最多20字)
   - `quadrant`
   - `completed`
+  - `notes` (任务备注，最多100字，可选)
   - `completed_at` (任务完成时间，用于抽屉时间分类)
   - `created_at`
   - `updated_at`

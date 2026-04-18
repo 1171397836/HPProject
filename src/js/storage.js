@@ -2,7 +2,8 @@ import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import CONFIG from './config.js';
 
-const MAX_TASK_LENGTH = 200;
+const MAX_TASK_LENGTH = 20;
+const MAX_NOTE_LENGTH = 100;
 const VALID_QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 
 const ERROR_MESSAGES = {
@@ -60,6 +61,37 @@ function validateTaskContent(content) {
   };
 }
 
+function validateTaskNote(note) {
+  if (note === undefined || note === null) {
+    return {
+      valid: true,
+      normalizedNote: null,
+      error: null
+    };
+  }
+
+  const normalizedNote = typeof note === 'string' ? note.trim() : '';
+
+  if (normalizedNote.length > MAX_NOTE_LENGTH) {
+    return {
+      valid: false,
+      normalizedNote,
+      error: {
+        code: 'PARAM_ERROR',
+        message: `备注不能超过${MAX_NOTE_LENGTH}个字符`,
+        originalError: null,
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+
+  return {
+    valid: true,
+    normalizedNote: normalizedNote || null,
+    error: null
+  };
+}
+
 function normalizeTask(task) {
   return {
     ...task,
@@ -67,7 +99,8 @@ function normalizeTask(task) {
     uid: task.user_id, // map user_id to uid
     createdAt: task.created_at || new Date().toISOString(),
     updatedAt: task.updated_at || new Date().toISOString(),
-    completedAt: task.completed_at || null
+    completedAt: task.completed_at || null,
+    notes: task.notes || null
   };
 }
 
@@ -114,10 +147,15 @@ const taskDB = {
     }
   },
 
-  async addTask(content, quadrant) {
+  async addTask(content, quadrant, notes) {
     const contentValidation = validateTaskContent(content);
     if (!contentValidation.valid) {
       return { success: false, data: null, error: contentValidation.error };
+    }
+
+    const noteValidation = validateTaskNote(notes);
+    if (!noteValidation.valid) {
+      return { success: false, data: null, error: noteValidation.error };
     }
 
     if (!VALID_QUADRANTS.includes(quadrant)) {
@@ -136,7 +174,8 @@ const taskDB = {
       quadrant,
       completed: false,
       created_at: now,
-      updated_at: now
+      updated_at: now,
+      notes: noteValidation.normalizedNote
     };
 
     try {
@@ -184,6 +223,14 @@ const taskDB = {
       }
     }
 
+    let noteValidation = null;
+    if (updateData.notes !== undefined) {
+      noteValidation = validateTaskNote(updateData.notes);
+      if (!noteValidation.valid) {
+        return { success: false, data: null, error: noteValidation.error };
+      }
+    }
+
     if (updateData.quadrant !== undefined && !VALID_QUADRANTS.includes(updateData.quadrant)) {
       return { success: false, data: null, error: handleError({ code: 'INVALID_QUADRANT' }, '无效的象限值') };
     }
@@ -208,6 +255,9 @@ const taskDB = {
     if (updateData.quadrant !== undefined) sanitizedUpdates.quadrant = updateData.quadrant;
     if (contentValidation) {
       sanitizedUpdates.content = contentValidation.normalizedContent;
+    }
+    if (noteValidation) {
+      sanitizedUpdates.notes = noteValidation.normalizedNote;
     }
     sanitizedUpdates.updated_at = new Date().toISOString();
 
@@ -302,10 +352,12 @@ const auth = {
 export {
   ERROR_MESSAGES,
   MAX_TASK_LENGTH,
+  MAX_NOTE_LENGTH,
   auth,
   handleError,
   taskDB,
-  validateTaskContent
+  validateTaskContent,
+  validateTaskNote
 };
 
 export default {

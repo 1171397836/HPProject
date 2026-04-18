@@ -265,6 +265,19 @@ function updateMessage(messageId, content) {
 }
 
 /**
+ * 获取日期所在周的周一日期
+ * @param {Date} date - 输入日期
+ * @returns {Date} 该周的周一日期（零点）
+ */
+function getMondayOfWeek(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const dayOfWeek = d.getDay() || 7; // 周日转为7
+  d.setDate(d.getDate() - dayOfWeek + 1);
+  return d;
+}
+
+/**
  * 获取所有任务数据的系统提示词
  * @param {Array} tasks - 任务列表
  * @returns {string} 系统提示词
@@ -272,6 +285,27 @@ function updateMessage(messageId, content) {
 function buildSystemPrompt(tasks) {
   const pendingTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
+
+  // 计算当日和本周完成的任务
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  // 获取本周一零点
+  const mondayOfWeek = getMondayOfWeek(now);
+
+  // 当日完成的任务（今天0点到现在）
+  const todayCompletedTasks = completedTasks.filter(task => {
+    if (!task.completedAt) return false;
+    const completedDate = new Date(task.completedAt);
+    return completedDate >= now;
+  });
+
+  // 本周完成的任务（本周一0点到现在）
+  const weekCompletedTasks = completedTasks.filter(task => {
+    if (!task.completedAt) return false;
+    const completedDate = new Date(task.completedAt);
+    return completedDate >= mondayOfWeek;
+  });
 
   // 按象限分组
   const quadrantNames = {
@@ -301,11 +335,21 @@ function buildSystemPrompt(tasks) {
     taskDescription = EMPTY_TASK_MESSAGE;
   }
 
+  // 构建当日和本周完成任务列表字符串
+  const todayTaskList = todayCompletedTasks.length > 0
+    ? todayCompletedTasks.map(t => t.content).join('、')
+    : '无';
+  const weekTaskList = weekCompletedTasks.length > 0
+    ? weekCompletedTasks.map(t => t.content).join('、')
+    : '无';
+
   return `${AI_PERSONA}
 
 ## 当前用户的任务情况
 待办任务总数：${pendingTasks.length} 个
 已完成任务：${completedTasks.length} 个
+当日完成：${todayCompletedTasks.length} 个（${todayTaskList}）
+本周完成：${weekCompletedTasks.length} 个（${weekTaskList}）
 
 ## 待办任务详情${taskDescription}
 
