@@ -151,10 +151,47 @@
             z-index: 20;
         }
         
-        /* 调整云朵位置 */
-        .app-container .cloud-deco.cloud-d {
-            top: -20px;
-            right: -40px;
+
+        
+        /* 浮动形状装饰 */
+        .float-shape {
+            position: absolute;
+            z-index: 1;
+        }
+        
+        .shape-tri {
+            top: 25%;
+            left: -30px;
+            width: 22px;
+            height: 22px;
+        }
+        
+        .shape-tri svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .shape-sq {
+            top: 60%;
+            left: -20px;
+            width: 18px;
+            height: 18px;
+            background: #f87171;
+            transform: rotate(12deg);
+            border-radius: 2px;
+            border: 1.5px solid #000;
+        }
+        
+        .shape-diamond {
+            bottom: 25%;
+            right: -25px;
+            width: 20px;
+            height: 20px;
+            background: #2dd4bf;
+            transform: rotate(45deg);
+            border-radius: 3px;
+            border: 1.5px solid #000;
         }
         
         /* Demo窗口在应用页面中的调整 */
@@ -184,7 +221,8 @@
                 display: none;
             }
             
-            .app-container .cloud-deco.cloud-d {
+            .app-container .cloud-deco,
+            .app-container .float-shape {
                 display: none;
             }
         }
@@ -888,6 +926,52 @@
             color: #991b1b;
         }
 
+        /* AI Loading 消息样式 */
+        .ai-message.loading .ai-message-content {
+            background: #f3f4f6;
+            border-bottom-left-radius: 4px;
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 20px;
+        }
+
+        /* Loading 动画指示器 */
+        .ai-loading-indicator {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            height: 20px;
+        }
+
+        .ai-loading-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #f97316;
+            border-radius: 50%;
+            animation: ai-loading-bounce 1.4s ease-in-out infinite both;
+        }
+
+        .ai-loading-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .ai-loading-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes ai-loading-bounce {
+            0%, 80%, 100% {
+                transform: scale(0.6);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
         /* 输入框 AI 模式 */
         .demo-input-bar.ai-mode .task-type-btn,
         .demo-input-bar.ai-mode #sendBtn {
@@ -896,6 +980,44 @@
 
         .demo-input-bar.ai-mode #aiSendBtn {
             display: flex;
+        }
+
+        .demo-input-bar.ai-mode #aiSendBtn[hidden] {
+            display: none;
+        }
+
+        .demo-input-bar.ai-mode #aiStopBtn {
+            display: flex;
+        }
+
+        .demo-input-bar.ai-mode #aiStopBtn[hidden] {
+            display: none;
+        }
+
+        /* 停止按钮样式 */
+        .demo-stop-btn {
+            width: 38px;
+            height: 38px;
+            background: #ef4444;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+            font-size: 14px;
+            flex-shrink: 0;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .demo-stop-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .demo-stop-btn[hidden] {
+            display: none;
         }
 
         .demo-input-bar.ai-mode #taskInput {
@@ -1005,6 +1127,77 @@
             min-height: 18px;
         }
 
+        /* AI 设置 toggle 开关 */
+        .ai-settings-toggle-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ai-settings-toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ai-settings-toggle-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .ai-settings-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .ai-settings-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .ai-settings-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .ai-settings-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .ai-settings-toggle-switch input:checked + .ai-settings-toggle-slider {
+            background-color: #f97316;
+        }
+
+        .ai-settings-toggle-switch input:checked + .ai-settings-toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .ai-settings-toggle-switch input:focus + .ai-settings-toggle-slider {
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.3);
+        }
+
         /* 打字指示器 */
         .ai-typing-indicator {
             display: flex;
@@ -1038,6 +1231,80 @@
                 transform: scale(1);
                 opacity: 1;
             }
+        }
+
+        /* ============================================
+           AI 消息生成状态指示器（右下角转圈）
+           ============================================ */
+
+        /* AI 消息内容容器 - 相对定位，用于放置转圈 */
+        .ai-message-content-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        /* AI 消息内容 */
+        .ai-message-content {
+            background: #f3f4f6;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--color-text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* 生成中状态的 AI 消息 */
+        .ai-message.ai.generating .ai-message-content {
+            padding-bottom: 28px; /* 为转圈留出空间 */
+        }
+
+        /* 右下角转圈动画 */
+        .ai-generating-indicator {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            width: 14px;
+            height: 14px;
+        }
+
+        .ai-generating-indicator::after {
+            content: '';
+            display: block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: ai-generating-spin 0.8s linear infinite;
+        }
+
+        @keyframes ai-generating-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 生成完成后的状态（可选：显示对勾） */
+        .ai-message.ai.completed .ai-generating-indicator::after {
+            display: none;
+        }
+
+        /* 生成错误状态 */
+        .ai-message.ai.error .ai-generating-indicator::after {
+            border: none;
+            content: '!';
+            color: #dc2626;
+            font-size: 12px;
+            font-weight: bold;
+            animation: none;
+            text-align: center;
+            line-height: 14px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -1075,7 +1342,21 @@
         <main class="app-main">
             <div class="app-container">
                 <!-- 装饰云朵 -->
-                <div class="cloud-deco cloud-d"></div>
+                <div class="page-background">
+                    <div class="cloud-deco cloud-a"></div>
+                    <div class="cloud-deco cloud-b"></div>
+                    <div class="cloud-deco cloud-c"></div>
+                    <div class="cloud-deco cloud-d"></div>
+                </div>
+                
+                <!-- 浮动形状装饰 -->
+                <div class="float-shape shape-tri">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3L3 20h18L12 3z" fill="#60a5fa" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="float-shape shape-sq"></div>
+                <div class="float-shape shape-diamond"></div>
                 
                 <!-- 鸭子助手 -->
                 <div class="duck-wrapper">
@@ -1221,6 +1502,11 @@
                         <input type="text" class="demo-input-field" id="taskInput" placeholder="添加新任务，例如：下午3点开会...">
                         <button class="demo-send-btn" id="sendBtn" type="button">➤</button>
                         <button class="demo-send-btn ai-send-btn" id="aiSendBtn" type="button" hidden>➤</button>
+                        <button class="demo-stop-btn" id="aiStopBtn" type="button" hidden>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                                <rect x="2" y="2" width="10" height="10" rx="2"/>
+                            </svg>
+                        </button>
                     </div>
                     
                     <div class="demo-window-shadow"></div>

@@ -310,3 +310,31 @@
     width: 82px;
     height: 82px;
 }
+
+/* 统一页面背景组件 */
+.page-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.page-background .cloud-deco {
+  position: absolute;
+  opacity: 0.8;
+}
+
+/* 云朵在统一背景中的位置 */
+.page-background .cloud-a { top: 15%; left: 6%; }
+.page-background .cloud-b { top: 55%; left: 0%; }
+.page-background .cloud-c { bottom: 5%; right: 2%; }
+.page-background .cloud-d { top: 30%; right: 25%; }
+
+/* 登录页面专用 - 降低透明度 */
+.page-background.is-login .cloud-deco {
+  opacity: 0.5;
+}

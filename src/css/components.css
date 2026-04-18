@@ -222,6 +222,10 @@
     background: #555; 
 }
 
+.demo-send-btn[hidden] {
+    display: none;
+}
+
 /* Task Type Selector Button */
 .task-type-btn {
     width: 38px;

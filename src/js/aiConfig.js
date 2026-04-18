@@ -1,10 +1,11 @@
-import { supabase } from './supabaseClient.js';
+import { StorageFactory } from './storage/index.js';
 import { getCurrentUser } from './auth.js';
 
 /**
  * AI 配置管理模块
  * 管理 LLM 提供商、API Key、模型选择等配置
- * 配置迁移到 Supabase 的 user_configs 表中，使用内存缓存以兼容同步读取
+ * 使用策略模式支持本地存储和云端同步
+ * API Key 始终只保存在本地，不上传到云端
  */
 
 const AI_CONFIG_KEY = 'tiewan_ai_config';
@@ -84,39 +85,69 @@ const DEFAULT_CONFIG = {
   apiKey: '',
   model: 'deepseek-chat',
   customApiBase: '',
-  customModel: ''
+  customModel: '',
+  syncToCloud: false  // 新增：是否同步到云端
 };
 
 // 内存中缓存配置，支持同步读取
 let cachedConfig = { ...DEFAULT_CONFIG };
 let isInitialized = false;
+let currentStorageStrategy = null;
 
 /**
- * 初始化 AI 配置，从 Supabase 获取
+ * 获取当前存储策略
+ * @returns {StorageStrategy} 存储策略实例
+ */
+function getStorageStrategy() {
+  if (!currentStorageStrategy) {
+    currentStorageStrategy = StorageFactory.createStrategy(cachedConfig.syncToCloud);
+  }
+  return currentStorageStrategy;
+}
+
+/**
+ * 重新初始化存储策略
+ * 当 syncToCloud 设置改变时调用
+ */
+function reinitializeStorageStrategy() {
+  currentStorageStrategy = StorageFactory.createStrategy(cachedConfig.syncToCloud);
+}
+
+/**
+ * 初始化 AI 配置
+ * 根据 syncToCloud 设置选择存储策略
  */
 async function initAIConfig() {
-  const user = getCurrentUser();
-  if (!user || !user.uid) return;
+  // 先尝试从本地读取配置（包含 syncToCloud 设置）
+  const localStrategy = StorageFactory.createStrategy(false);
+  const localConfig = await localStrategy.get(AI_CONFIG_KEY);
 
-  try {
-    const { data, error } = await supabase
-      .from('user_configs')
-      .select('config')
-      .eq('uid', user.uid)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.warn('[AIConfig] 获取云端配置失败', error);
-    }
-
-    if (data && data.config) {
-      cachedConfig = { ...DEFAULT_CONFIG, ...data.config };
-    }
-  } catch (error) {
-    console.warn('[AIConfig] 初始化配置失败', error);
-  } finally {
-    isInitialized = true;
+  if (localConfig) {
+    cachedConfig = { ...DEFAULT_CONFIG, ...localConfig };
   }
+
+  // 根据 syncToCloud 设置初始化存储策略
+  reinitializeStorageStrategy();
+
+  // 如果使用云端同步，尝试从云端获取更新的配置
+  if (cachedConfig.syncToCloud) {
+    const user = getCurrentUser();
+    if (user && user.uid) {
+      try {
+        const cloudConfig = await getStorageStrategy().get(AI_CONFIG_KEY);
+        if (cloudConfig) {
+          // 合并云端配置（云端配置优先级更高，但不覆盖本地 API Key）
+          const localApiKey = cachedConfig.apiKey;
+          cachedConfig = { ...cachedConfig, ...cloudConfig };
+          cachedConfig.apiKey = localApiKey || cloudConfig.apiKey || '';
+        }
+      } catch (error) {
+        console.warn('[AIConfig] 从云端加载配置失败', error);
+      }
+    }
+  }
+
+  isInitialized = true;
 }
 
 /**
@@ -128,7 +159,8 @@ function getAIConfig() {
 }
 
 /**
- * 保存 AI 配置到缓存和 Supabase
+ * 保存 AI 配置
+ * 根据 syncToCloud 设置决定存储策略
  * @param {Object} config - 配置对象
  * @returns {boolean} 是否启动保存
  */
@@ -136,24 +168,22 @@ function saveAIConfig(config) {
   const newConfig = { ...DEFAULT_CONFIG, ...config };
   cachedConfig = newConfig;
 
-  const user = getCurrentUser();
-  if (user && user.uid) {
-    const now = new Date().toISOString();
-    supabase
-      .from('user_configs')
-      .upsert({
-        uid: user.uid,
-        config: newConfig,
-        updated_at: now
-      }, { onConflict: 'uid' })
-      .then(({ error }) => {
-        if (error) {
-          console.error('[AIConfig] 保存云端配置失败', error);
-        }
-      });
-    return true;
+  // 如果 syncToCloud 设置改变，重新初始化存储策略
+  if (currentStorageStrategy && currentStorageStrategy.getStrategyName() !== (newConfig.syncToCloud ? 'hybrid' : 'local')) {
+    reinitializeStorageStrategy();
   }
-  return false;
+
+  // 使用当前存储策略保存配置
+  const strategy = getStorageStrategy();
+  strategy.set(AI_CONFIG_KEY, newConfig).then(success => {
+    if (success) {
+      console.log(`[AIConfig] 配置已保存（策略: ${strategy.getStrategyName()}）`);
+    } else {
+      console.error('[AIConfig] 配置保存失败');
+    }
+  });
+
+  return true;
 }
 
 function validateAIConfig(config) {
@@ -195,16 +225,25 @@ function isAIConfigReady() {
   return !!config.apiKey && config.apiKey.trim().length >= 10;
 }
 
-function clearAIConfig() {
+/**
+ * 清除 AI 配置
+ * 同时清除本地和云端配置
+ */
+async function clearAIConfig() {
   cachedConfig = { ...DEFAULT_CONFIG };
+
+  // 清除本地存储
+  const localStrategy = StorageFactory.createStrategy(false);
+  await localStrategy.remove(AI_CONFIG_KEY);
+
+  // 清除云端配置
   const user = getCurrentUser();
   if (user && user.uid) {
-    supabase
-      .from('user_configs')
-      .delete()
-      .eq('uid', user.uid)
-      .then();
+    const hybridStrategy = StorageFactory.createStrategy(true);
+    await hybridStrategy.remove(AI_CONFIG_KEY);
   }
+
+  currentStorageStrategy = null;
 }
 
 export {

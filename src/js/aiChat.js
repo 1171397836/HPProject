@@ -14,7 +14,8 @@ const MESSAGE_TYPE = {
   USER: 'user',
   AI: 'ai',
   SYSTEM: 'system',
-  ERROR: 'error'
+  ERROR: 'error',
+  LOADING: 'loading'
 };
 
 const MAX_HISTORY_LENGTH = 50; // 最多保留 50 条消息
@@ -24,6 +25,7 @@ let sessions = [];
 let currentSessionId = null;
 let isStreaming = false;
 let abortController = null;
+let saveHistoryTimer = null;
 
 // 回调函数存储
 const callbacks = {
@@ -249,6 +251,16 @@ function updateMessage(messageId, content) {
     if (callbacks.onMessageUpdate) {
       callbacks.onMessageUpdate(message, session.messages);
     }
+
+    if (isStreaming) {
+      if (saveHistoryTimer) clearTimeout(saveHistoryTimer);
+      saveHistoryTimer = setTimeout(() => {
+        saveChatHistory();
+        saveHistoryTimer = null;
+      }, 800);
+    } else {
+      saveChatHistory();
+    }
   }
 }
 
@@ -340,6 +352,7 @@ async function sendMessage(userMessage, tasks = []) {
         role: m.type === MESSAGE_TYPE.USER ? 'user' : 'assistant',
         content: m.content
       }))
+      .filter(m => m.content && m.content.trim() !== '') // 过滤掉内容为空的消息
   ];
 
   try {
@@ -412,8 +425,12 @@ async function sendMessageStream(userMessage, tasks = []) {
   // 添加用户消息
   addMessage(MESSAGE_TYPE.USER, userMessage);
 
-  // 创建 AI 消息占位
-  const aiMessage = addMessage(MESSAGE_TYPE.AI, '');
+  // 创建 loading 状态消息占位符
+  const loadingMessage = addMessage(MESSAGE_TYPE.LOADING, '');
+
+  // 创建 AbortController 用于取消请求
+  abortController = new AbortController();
+  isStreaming = true;
 
   const apiBase = getApiBase(config);
   const modelId = getModelId(config);
@@ -430,15 +447,8 @@ async function sendMessageStream(userMessage, tasks = []) {
         role: m.type === MESSAGE_TYPE.USER ? 'user' : 'assistant',
         content: m.content
       }))
+      .filter(m => m.content && m.content.trim() !== '') // 过滤掉内容为空的消息
   ];
-
-  // 创建 AbortController 用于取消请求
-  abortController = new AbortController();
-  isStreaming = true;
-
-  if (callbacks.onStreamStart) {
-    callbacks.onStreamStart();
-  }
 
   try {
     const response = await fetch(`${apiBase}/chat/completions`, {
@@ -460,6 +470,20 @@ async function sendMessageStream(userMessage, tasks = []) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.error?.message || `API 请求失败: ${response.status}`);
+    }
+
+    // 收到第一个响应后，将 loading 消息替换为 AI 消息
+    // 先移除 loading 消息
+    const loadingIndex = session.messages.findIndex(m => m.id === loadingMessage.id);
+    if (loadingIndex !== -1) {
+      session.messages.splice(loadingIndex, 1);
+    }
+    // 创建实际的 AI 消息
+    const aiMessage = addMessage(MESSAGE_TYPE.AI, '');
+
+    // 通知流式开始，传递消息ID
+    if (callbacks.onStreamStart) {
+      callbacks.onStreamStart(aiMessage.id);
     }
 
     const reader = response.body.getReader();
@@ -493,6 +517,8 @@ async function sendMessageStream(userMessage, tasks = []) {
     }
 
     isStreaming = false;
+    if (saveHistoryTimer) { clearTimeout(saveHistoryTimer); saveHistoryTimer = null; }
+    saveChatHistory();
 
     if (callbacks.onStreamEnd) {
       callbacks.onStreamEnd(aiMessage);
@@ -507,22 +533,32 @@ async function sendMessageStream(userMessage, tasks = []) {
   } catch (error) {
     isStreaming = false;
 
+    // 移除 loading 消息
+    const session = getCurrentSession();
+    const loadingIndex = session.messages.findIndex(m => m.id === loadingMessage.id);
+    if (loadingIndex !== -1) {
+      session.messages.splice(loadingIndex, 1);
+      saveChatHistory();
+      if (callbacks.onMessageUpdate) {
+        callbacks.onMessageUpdate(null, session.messages);
+      }
+    }
+
     if (error.name === 'AbortError') {
-      // 用户取消
+      if (saveHistoryTimer) { clearTimeout(saveHistoryTimer); saveHistoryTimer = null; }
+      saveChatHistory();
       return {
         success: true,
-        message: aiMessage,
-        content: aiMessage.content,
+        message: null,
+        content: '',
         cancelled: true
       };
     }
 
     console.error('[AIChat] 流式发送失败:', error);
 
-    // 更新消息为错误状态
-    const errorContent = `发送失败: ${error.message}`;
-    aiMessage.type = MESSAGE_TYPE.ERROR;
-    updateMessage(aiMessage.id, errorContent);
+    // 添加错误消息
+    const errorMessage = addMessage(MESSAGE_TYPE.ERROR, `发送失败: ${error.message}`);
 
     if (callbacks.onError) {
       callbacks.onError(error);
@@ -531,7 +567,7 @@ async function sendMessageStream(userMessage, tasks = []) {
     return {
       success: false,
       error: error.message,
-      message: aiMessage
+      message: errorMessage
     };
   }
 }
@@ -545,6 +581,16 @@ function cancelStream() {
     abortController = null;
   }
   isStreaming = false;
+  if (saveHistoryTimer) { clearTimeout(saveHistoryTimer); saveHistoryTimer = null; }
+  saveChatHistory();
+}
+
+/**
+ * 检查是否正在流式生成
+ * @returns {boolean}
+ */
+function isGenerating() {
+  return isStreaming;
 }
 
 /**
@@ -602,6 +648,7 @@ export {
   getMessages,
   getWelcomeMessage,
   initChat,
+  isGenerating,
   loadChatHistory,
   saveChatHistory,
   sendMessage,
@@ -614,6 +661,7 @@ export default {
   sendMessage,
   sendMessageStream,
   cancelStream,
+  isGenerating,
   getMessages,
   addMessage,
   clearChatHistory,
