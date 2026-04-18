@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx vite build",
     "preview": "vite preview",
     "test": "node src/scripts/smoke-test.mjs"
   },
@@ -17,10 +17,10 @@
   "author": "铁腕团队",
   "license": "MIT",
   "devDependencies": {
-    "dotenv": "^17.4.2",
-    "vite": "^5.0.0"
+    "dotenv": "^17.4.2"
   },
   "dependencies": {
+    "vite": "^5.0.0",
     "@supabase/supabase-js": "^2.103.3"
   }
 }
