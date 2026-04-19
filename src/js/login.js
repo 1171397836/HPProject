@@ -7,6 +7,7 @@ import {
   validatePasswordMatch,
   validateUsername
 } from './auth.js';
+import { validateCode, useCode } from './invitationService.js';
 
 function getElements() {
   return {
@@ -21,11 +22,12 @@ function getElements() {
     registerEmail: document.getElementById('registerEmail'),
     registerPassword: document.getElementById('registerPassword'),
     registerConfirmPassword: document.getElementById('registerConfirmPassword'),
+    registerInvitationCode: document.getElementById('registerInvitationCode'),
     toggleLoginPassword: document.getElementById('toggleLoginPassword'),
     toggleRegisterPassword: document.getElementById('toggleRegisterPassword'),
     toggleConfirmPassword: document.getElementById('toggleConfirmPassword'),
     loginBtn: document.getElementById('loginBtn'),
-    registerBtn: document.getElementById('registerBtn')
+    registerBtn: document.getElementById('registerBtn'),
   };
 }
 
@@ -107,6 +109,11 @@ function bindRealtimeValidation(elements) {
       hideFieldError(elements.registerConfirmPassword, 'registerConfirmError');
     }
   });
+
+  // 邀请码实时验证
+  elements.registerInvitationCode.addEventListener('input', () => {
+    hideFieldError(elements.registerInvitationCode, 'registerInvitationError');
+  });
 }
 
 async function submitLogin(elements) {
@@ -150,6 +157,7 @@ async function submitRegister(elements) {
   hideFieldError(elements.registerEmail, 'registerEmailError');
   hideFieldError(elements.registerPassword, 'registerPasswordError');
   hideFieldError(elements.registerConfirmPassword, 'registerConfirmError');
+  hideFieldError(elements.registerInvitationCode, 'registerInvitationError');
 
   const usernameResult = validateUsername(elements.registerEmail.value);
   const passwordResult = validatePassword(elements.registerPassword.value);
@@ -170,6 +178,19 @@ async function submitRegister(elements) {
     showFieldError(elements.registerConfirmPassword, 'registerConfirmError', confirmResult.error.message);
   }
 
+  // 验证邀请码
+  const invitationCode = elements.registerInvitationCode.value.trim();
+  if (!invitationCode) {
+    showFieldError(elements.registerInvitationCode, 'registerInvitationError', '请输入邀请码');
+    return;
+  }
+
+  const codeValidation = await validateCode(invitationCode);
+  if (!codeValidation.valid) {
+    showFieldError(elements.registerInvitationCode, 'registerInvitationError', codeValidation.error);
+    return;
+  }
+
   if (!usernameResult.valid || !passwordResult.valid || !confirmResult.valid) {
     return;
   }
@@ -181,11 +202,21 @@ async function submitRegister(elements) {
     const result = await handleRegister(
       elements.registerEmail.value.trim(),
       elements.registerPassword.value,
-      elements.registerConfirmPassword.value
+      elements.registerConfirmPassword.value,
+      { skipRedirect: true }  // 先不跳转，等待使用邀请码完成
     );
 
     if (!result.success) {
       showFieldError(elements.registerEmail, 'registerEmailError', result.error.message);
+    } else {
+      // 注册成功，使用邀请码
+      const useResult = await useCode(invitationCode);
+      if (!useResult.success) {
+        console.error('[Login] 使用邀请码失败:', useResult.error);
+        // 不影响注册流程，仅记录错误
+      }
+      // 使用邀请码完成后，手动跳转到应用页面
+      navigateTo('app.html');
     }
   } finally {
     elements.registerBtn.disabled = false;
@@ -234,4 +265,3 @@ function initLoginPage() {
 }
 
 document.addEventListener('DOMContentLoaded', initLoginPage);
-

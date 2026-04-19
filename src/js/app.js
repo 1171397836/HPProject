@@ -6,8 +6,9 @@
  * - 新增 AI 助手功能
  */
 
-import { MAX_TASK_LENGTH } from './storage.js';
+import { MAX_TASK_LENGTH, MAX_AI_MESSAGE_LENGTH } from './storage.js';
 import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
+import { checkIsAdmin } from './invitationService.js';
 
 // 导入控制器模块
 import {
@@ -72,6 +73,9 @@ async function initApp() {
   // 更新用户显示
   updateUserDisplay('userName', 'userAvatar');
 
+  // 检查管理员权限并显示/隐藏邀请码管理按钮
+  await checkAndShowAdminMenu();
+
   // 绑定事件监听器
   bindEventListeners();
 
@@ -86,6 +90,21 @@ async function initApp() {
 
   // 初始化 AI 聊天
   initAIChat();
+}
+
+/**
+ * 检查管理员权限并显示邀请码管理菜单
+ */
+async function checkAndShowAdminMenu() {
+  try {
+    const { isAdmin } = await checkIsAdmin();
+    const invitationBtn = document.getElementById('drawerInvitationBtn');
+    if (invitationBtn && isAdmin) {
+      invitationBtn.style.display = 'flex';
+    }
+  } catch (err) {
+    console.error('[App] 检查管理员权限失败:', err);
+  }
 }
 
 /**
@@ -272,12 +291,16 @@ function bindEventListeners() {
     }
   });
 
-  // 输入框长度限制
+  // 输入框长度限制 - 根据当前模式动态调整
   document.getElementById('taskInput')?.addEventListener('input', event => {
     const input = event.currentTarget;
-    if (input.value.length > MAX_TASK_LENGTH) {
-      input.value = input.value.slice(0, MAX_TASK_LENGTH);
-      showInfo(`任务内容已限制在 ${MAX_TASK_LENGTH} 字以内`);
+    const isAIMode = getIsAIMode();
+    const maxLength = isAIMode ? MAX_AI_MESSAGE_LENGTH : MAX_TASK_LENGTH;
+    const contentType = isAIMode ? 'AI 消息' : '任务内容';
+
+    if (input.value.length > maxLength) {
+      input.value = input.value.slice(0, maxLength);
+      showInfo(`${contentType}已限制在 ${maxLength} 字以内`);
     }
   });
 
@@ -308,6 +331,11 @@ function bindEventListeners() {
 
   // 绑定 AI 事件
   bindAIEventListeners();
+
+  // 绑定邀请码管理按钮点击事件
+  document.getElementById('drawerInvitationBtn')?.addEventListener('click', () => {
+    window.location.href = 'admin.html';
+  });
 
   // 象限点击切换
   document.querySelectorAll('.quadrant').forEach(element => {

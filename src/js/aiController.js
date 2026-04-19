@@ -39,6 +39,10 @@ let currentTasks = [];
 let isGeneratingState = false;
 let currentGeneratingMessageId = null; // 当前正在生成的消息ID
 
+// 输入框内容状态管理 - 用于保存不同模式下的输入内容
+let taskModeInputContent = '';  // 任务模式输入内容
+let aiModeInputContent = '';    // AI 模式输入内容
+
 /**
  * 设置当前用户
  * @param {Object} user - 用户对象
@@ -165,13 +169,23 @@ function renderAIChatSessions(sessions, currentSessionId) {
  * 切换 AI 模式
  */
 function toggleAIMode() {
+  const taskInput = document.getElementById('taskInput');
+
+  // 保存当前模式的输入内容，切换前保存
+  if (isAIMode) {
+    // 当前是 AI 模式，保存 AI 模式内容
+    aiModeInputContent = taskInput?.value || '';
+  } else {
+    // 当前是任务模式，保存任务模式内容
+    taskModeInputContent = taskInput?.value || '';
+  }
+
   isAIMode = !isAIMode;
 
   const aiBtn = document.getElementById('aiAssistantBtn');
   const taskMatrixContainer = document.getElementById('taskMatrixContainer');
   const aiChatContainer = document.getElementById('aiChatContainer');
   const inputBar = document.querySelector('.demo-input-bar');
-  const taskInput = document.getElementById('taskInput');
 
   if (isAIMode) {
     // 切换到 AI 模式
@@ -210,6 +224,8 @@ function toggleAIMode() {
       }
     }
 
+    // 恢复 AI 模式的输入内容
+    taskInput.value = aiModeInputContent;
     taskInput.focus();
   } else {
     // 切换回任务模式
@@ -234,6 +250,9 @@ function toggleAIMode() {
       };
       taskInput.placeholder = `添加${quadrantNames[quadrant] || '任务'}任务，例如：下午3点开会...`;
     }
+
+    // 恢复任务模式的输入内容
+    taskInput.value = taskModeInputContent;
   }
 }
 
