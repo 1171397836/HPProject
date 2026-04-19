@@ -82,6 +82,7 @@ HPProject/
 |------|------|------------|
 | `login.html` | 登录/注册页 | 是 |
 | `app.html` | 任务主页面 | 是 |
+| `admin.html` | 邀请码管理后台（仅管理员） | 是 |
 | `index.html` | 落地页/介绍页，提供跳转登录入口 | 否 |
 | `motherduck.html` | 独立页面/设计稿性质页面 | 否 |
 
@@ -97,7 +98,13 @@ app.html
   └── src/js/app.js
         ├── auth.js
         ├── storage.js
-        └── dialog.js
+        ├── dialog.js
+        └── invitationService.js (检查管理员权限)
+
+admin.html (应用页侧边栏进入，仅管理员)
+  └── src/js/admin.js
+        ├── auth.js
+        └── invitationService.js
 ```
 
 ## 6. 核心模块地图
@@ -117,6 +124,8 @@ app.html
 | `src/js/taskController.js` | 任务编辑对话框、确认对话框、任务CRUD控制逻辑 | 编辑任务弹窗、任务备注功能异常 |
 | `src/js/dialog.js` | 通用弹窗与堆叠弹窗能力底层支持 | 弹窗栈、对话框渲染异常 |
 | `src/js/drawerController.js` | 侧边栏抽屉控制（打开/关闭/Tab切换/任务渲染），历史已完成Tab的年→月→周三级折叠 | 抽屉交互异常、历史折叠分组异常 |
+| `src/js/invitationService.js` | 邀请码服务（验证、生成、使用追踪、管理员权限检查） | 邀请码验证失败、使用次数不更新、管理员权限异常 |
+| `src/js/admin.js` | 邀请码管理后台逻辑（生成邀请码、列表展示） | 管理后台功能异常 |
 
 ### 6.2 历史/草稿文件
 
@@ -140,7 +149,7 @@ app.html
   - 邮箱/密码即时校验
   - 调用 `auth.js` 完成登录注册
   - 已登录用户直接跳转 `app.html`
-  - 连击 Logo 触发隐藏管理员登录模式，并在登录成功后跳转 `admin.html`
+  - **注册时验证邀请码**（内测阶段必填）
 
 ### 7.2 应用页
 
@@ -155,6 +164,16 @@ app.html
   - `taskTypeBtn`
   - `taskInput`
   - `sendBtn`
+  - **侧边栏"邀请码管理"按钮**（仅管理员可见）
+
+### 7.3 邀请码管理后台
+
+- 页面：`admin.html`
+- 脚本入口：`src/js/admin.js`
+- 关键职责：
+  - 生成新邀请码（设置最大使用次数）
+  - 查看邀请码列表（使用进度、剩余次数）
+  - 返回应用页
 
 ## 8. 核心功能对应位置
 
@@ -171,6 +190,8 @@ app.html
 | 退出登录 | `src/js/app.js`、`src/js/auth.js` |
 | 通用确认弹窗 | `src/js/dialog.js` 与 `src/js/app.js` 调用处 |
 | AI 助手对话 | `src/js/aiChat.js`、`src/js/aiConfig.js` |
+| **邀请码验证/生成** | `src/js/invitationService.js`、`src/js/login.js` |
+| **邀请码管理后台** | `src/js/admin.js`、`admin.html` |
 | 构建与部署 | `vite.config.js`、`vercel.json` |
 
 ## 9. 数据与状态
@@ -195,7 +216,23 @@ app.html
   - `created_at`
   - `updated_at`
 
-### 9.3 页面状态
+### 9.3 邀请码数据
+
+- `invitationService.js` 是邀请码数据访问层
+- 使用 Supabase `invitation_codes` 表存储
+- 核心字段：
+  - `code` (6位随机邀请码)
+  - `max_uses` (最大使用次数)
+  - `used_count` (已使用次数)
+  - `created_by` (创建者ID)
+
+### 9.4 管理员权限
+
+- 存储在 `user_configs.is_admin` 字段
+- 通过 `invitationService.checkIsAdmin()` 检查
+- 仅管理员可访问 `admin.html` 管理后台
+
+### 9.5 页面状态
 
 - 当前选中象限由 `app.js` 管理，并持久化到本地存储
 - 当前任务列表由 `app.js` 内存状态维护，再统一渲染到四象限 DOM
