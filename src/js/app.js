@@ -139,24 +139,43 @@ async function refreshTasks() {
 }
 
 /**
+ * 统一刷新 UI 界面
+ * 更新任务矩阵、抽屉任务、AI 任务状态和头部统计
+ * @param {Object} options - 配置选项
+ * @param {boolean} options.updateAITasks - 是否更新 AI 任务状态，默认为 true
+ * @param {boolean} options.updateCurrentTasks - 是否更新当前任务状态，默认为 false
+ */
+function refreshUI(options = {}) {
+  const { updateAITasks = true, updateCurrentTasks = false } = options;
+  const tasks = getCurrentTasks();
+
+  if (updateAITasks) {
+    setAITasks(tasks);
+  }
+  if (updateCurrentTasks) {
+    setCurrentTasks(tasks);
+  }
+
+  renderTaskMatrix(tasks, {
+    onToggle: handleToggleTask,
+    onEdit: handleEditTask,
+    onDelete: handleDeleteTask,
+    onDragEnd: handleDragEnd
+  });
+  renderDrawerTasks(tasks, {
+    onToggleTask: handleToggleTask,
+    onDeleteTask: handleDeleteTask
+  });
+  updateHeaderStats(getTaskStats().pending);
+}
+
+/**
  * 处理任务切换完成状态
  */
 async function handleToggleTask(taskId, completed, taskElement, triggerElement) {
   const success = await toggleTask(taskId, completed, taskElement, triggerElement);
   if (success) {
-    const tasks = getCurrentTasks();
-    setAITasks(tasks);
-    renderTaskMatrix(tasks, {
-      onToggle: handleToggleTask,
-      onEdit: handleEditTask,
-      onDelete: handleDeleteTask,
-      onDragEnd: handleDragEnd
-    });
-    renderDrawerTasks(tasks, {
-      onToggleTask: handleToggleTask,
-      onDeleteTask: handleDeleteTask
-    });
-    updateHeaderStats(getTaskStats().pending);
+    refreshUI({ updateAITasks: true });
   }
 }
 
@@ -166,19 +185,7 @@ async function handleToggleTask(taskId, completed, taskElement, triggerElement) 
 async function handleEditTask(taskId) {
   const success = await editTask(taskId, { defaultQuadrant: getCurrentQuadrant() });
   if (success) {
-    const tasks = getCurrentTasks();
-    setAITasks(tasks);
-    renderTaskMatrix(tasks, {
-      onToggle: handleToggleTask,
-      onEdit: handleEditTask,
-      onDelete: handleDeleteTask,
-      onDragEnd: handleDragEnd
-    });
-    renderDrawerTasks(tasks, {
-      onToggleTask: handleToggleTask,
-      onDeleteTask: handleDeleteTask
-    });
-    updateHeaderStats(getTaskStats().pending);
+    refreshUI({ updateAITasks: true });
   }
 }
 
@@ -188,20 +195,7 @@ async function handleEditTask(taskId) {
 async function handleDeleteTask(taskId) {
   const success = await deleteTask(taskId);
   if (success) {
-    const tasks = getCurrentTasks();
-    setCurrentTasks(tasks);
-    setAITasks(tasks);
-    renderTaskMatrix(tasks, {
-      onToggle: handleToggleTask,
-      onEdit: handleEditTask,
-      onDelete: handleDeleteTask,
-      onDragEnd: handleDragEnd
-    });
-    renderDrawerTasks(tasks, {
-      onToggleTask: handleToggleTask,
-      onDeleteTask: handleDeleteTask
-    });
-    updateHeaderStats(getTaskStats().pending);
+    refreshUI({ updateAITasks: true, updateCurrentTasks: true });
   }
 }
 
@@ -211,19 +205,7 @@ async function handleDeleteTask(taskId) {
 async function handleDragEnd(taskId, targetQuadrant) {
   const success = await moveTask(taskId, targetQuadrant);
   if (success) {
-    const tasks = getCurrentTasks();
-    setAITasks(tasks);
-    renderTaskMatrix(tasks, {
-      onToggle: handleToggleTask,
-      onEdit: handleEditTask,
-      onDelete: handleDeleteTask,
-      onDragEnd: handleDragEnd
-    });
-    renderDrawerTasks(tasks, {
-      onToggleTask: handleToggleTask,
-      onDeleteTask: handleDeleteTask
-    });
-    updateHeaderStats(getTaskStats().pending);
+    refreshUI({ updateAITasks: true });
   }
 }
 
@@ -239,20 +221,7 @@ async function handleAddTask() {
 
   const success = await addTask(content, quadrant);
   if (success) {
-    const tasks = getCurrentTasks();
-    setCurrentTasks(tasks);
-    setAITasks(tasks);
-    renderTaskMatrix(tasks, {
-      onToggle: handleToggleTask,
-      onEdit: handleEditTask,
-      onDelete: handleDeleteTask,
-      onDragEnd: handleDragEnd
-    });
-    renderDrawerTasks(tasks, {
-      onToggleTask: handleToggleTask,
-      onDeleteTask: handleDeleteTask
-    });
-    updateHeaderStats(getTaskStats().pending);
+    refreshUI({ updateAITasks: true, updateCurrentTasks: true });
 
     // 清空输入框并聚焦
     if (input) {

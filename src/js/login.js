@@ -5,7 +5,7 @@ import {
   navigateTo,
   validatePassword,
   validatePasswordMatch,
-  validateUsername
+  validateEmail
 } from './auth.js';
 import { validateCode, useCode } from './invitationService.js';
 
@@ -77,7 +77,7 @@ function switchToLogin(elements) {
 
 function bindRealtimeValidation(elements) {
   elements.loginEmail.addEventListener('input', () => {
-    if (validateUsername(elements.loginEmail.value).valid) {
+    if (validateEmail(elements.loginEmail.value).valid) {
       hideFieldError(elements.loginEmail, 'loginEmailError');
     }
   });
@@ -89,7 +89,7 @@ function bindRealtimeValidation(elements) {
   });
 
   elements.registerEmail.addEventListener('input', () => {
-    if (validateUsername(elements.registerEmail.value).valid) {
+    if (validateEmail(elements.registerEmail.value).valid) {
       hideFieldError(elements.registerEmail, 'registerEmailError');
     }
   });
@@ -120,18 +120,18 @@ async function submitLogin(elements) {
   hideFieldError(elements.loginEmail, 'loginEmailError');
   hideFieldError(elements.loginPassword, 'loginPasswordError');
 
-  const usernameResult = validateUsername(elements.loginEmail.value);
+  const emailResult = validateEmail(elements.loginEmail.value);
   const passwordResult = validatePassword(elements.loginPassword.value);
 
-  if (!usernameResult.valid) {
-    showFieldError(elements.loginEmail, 'loginEmailError', usernameResult.error.message);
+  if (!emailResult.valid) {
+    showFieldError(elements.loginEmail, 'loginEmailError', emailResult.error.message);
   }
 
   if (!passwordResult.valid) {
     showFieldError(elements.loginPassword, 'loginPasswordError', passwordResult.error.message);
   }
 
-  if (!usernameResult.valid || !passwordResult.valid) {
+  if (!emailResult.valid || !passwordResult.valid) {
     return;
   }
 

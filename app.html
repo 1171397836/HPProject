@@ -1095,6 +1095,12 @@
             display: none;
         }
 
+        /* 非 AI 模式下隐藏 AI 发送按钮 */
+        .demo-input-bar:not(.ai-mode) #aiSendBtn,
+        .demo-input-bar:not(.ai-mode) #aiStopBtn {
+            display: none;
+        }
+
         .demo-input-bar.ai-mode #aiSendBtn {
             display: flex;
         }

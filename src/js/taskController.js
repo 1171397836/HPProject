@@ -5,7 +5,7 @@
 
 import { MAX_TASK_LENGTH, taskDB, validateTaskContent } from './storage.js';
 import { createDialogContent, openStackedDialog } from './dialog.js';
-import { showError, showSuccess, QUADRANT_CONFIG } from './uiController.js';
+import { showError, showSuccess, QUADRANT_CONFIG, escapeHtml } from './uiController.js';
 
 // 任务状态
 let currentTasks = [];
@@ -668,20 +668,6 @@ async function deleteTask(taskId) {
   currentTasks = currentTasks.filter(task => task._id !== taskId);
   showSuccess('任务已删除');
   return true;
-}
-
-/**
- * HTML转义
- * @param {string} text - 原始文本
- * @returns {string} 转义后的文本
- */
-function escapeHtml(text) {
-  return String(text || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 export {

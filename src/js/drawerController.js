@@ -442,6 +442,7 @@ export {
   bindDrawerEventListeners,
   closeDrawer,
   getActiveTab,
+  getMondayOfWeek,
   openDrawer,
   renderDrawerTasks,
   setDrawerCallbacks,

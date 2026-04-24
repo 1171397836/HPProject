@@ -8,6 +8,7 @@ import { AI_PERSONA, ANSWER_STYLE } from './prompts/roleConfig.js';
 import { AI_CAPABILITIES, QUADRANT_RULES } from './prompts/taskRules.js';
 import { WELCOME_MESSAGE, EMPTY_TASK_MESSAGE } from './prompts/uiMessages.js';
 import { getCurrentUser } from './auth.js';
+import { getMondayOfWeek } from './drawerController.js';
 
 // 消息类型定义
 const MESSAGE_TYPE = {
@@ -262,19 +263,6 @@ function updateMessage(messageId, content) {
       saveChatHistory();
     }
   }
-}
-
-/**
- * 获取日期所在周的周一日期
- * @param {Date} date - 输入日期
- * @returns {Date} 该周的周一日期（零点）
- */
-function getMondayOfWeek(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const dayOfWeek = d.getDay() || 7; // 周日转为7
-  d.setDate(d.getDate() - dayOfWeek + 1);
-  return d;
 }
 
 /**
