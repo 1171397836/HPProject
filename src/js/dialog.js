@@ -137,8 +137,17 @@ function createDialogInstance(options = {}) {
     closeDialog(dialog.id, { cancelled: true });
   };
 
+  let mouseDownTarget = null;
+
+  root.addEventListener('mousedown', event => {
+    mouseDownTarget = event.target;
+  });
+
   root.addEventListener('click', event => {
-    if (event.target === root || event.target?.dataset?.role === 'mask') {
+    const isClickOnMask = event.target === root || event.target?.dataset?.role === 'mask';
+    const isMouseDownOnMask = mouseDownTarget === root || mouseDownTarget?.dataset?.role === 'mask';
+    mouseDownTarget = null;
+    if (isClickOnMask && isMouseDownOnMask) {
       handleRequestClose();
     }
   });

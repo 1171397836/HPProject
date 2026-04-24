@@ -29,7 +29,7 @@ if not exist "node_modules" (
 
 :: 启动开发服务器
 echo [状态] 正在启动本地服务...
-echo [提示] 服务启动后，浏览器将自动打开 http://127.0.0.1:8080/login.html
+echo [提示] 服务启动后，浏览器将自动打开 http://localhost:3000/login.html
 echo.
 call npm run dev
 

@@ -159,15 +159,15 @@ async function submitRegister(elements) {
   hideFieldError(elements.registerConfirmPassword, 'registerConfirmError');
   hideFieldError(elements.registerInvitationCode, 'registerInvitationError');
 
-  const usernameResult = validateUsername(elements.registerEmail.value);
+  const emailResult = validateEmail(elements.registerEmail.value);
   const passwordResult = validatePassword(elements.registerPassword.value);
   const confirmResult = validatePasswordMatch(
     elements.registerPassword.value,
     elements.registerConfirmPassword.value
   );
 
-  if (!usernameResult.valid) {
-    showFieldError(elements.registerEmail, 'registerEmailError', usernameResult.error.message);
+  if (!emailResult.valid) {
+    showFieldError(elements.registerEmail, 'registerEmailError', emailResult.error.message);
   }
 
   if (!passwordResult.valid) {
@@ -191,7 +191,7 @@ async function submitRegister(elements) {
     return;
   }
 
-  if (!usernameResult.valid || !passwordResult.valid || !confirmResult.valid) {
+  if (!emailResult.valid || !passwordResult.valid || !confirmResult.valid) {
     return;
   }
 
