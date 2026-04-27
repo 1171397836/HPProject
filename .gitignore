@@ -6,4 +6,5 @@ viewer01-dist/
 dist/
 diff.txt
 .workbuddy/
+.claude/settings.local.json
 

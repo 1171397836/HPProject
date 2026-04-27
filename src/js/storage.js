@@ -2,8 +2,8 @@ import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import CONFIG from './config.js';
 
-const MAX_TASK_LENGTH = 20;
-const MAX_NOTE_LENGTH = 100;
+const MAX_TASK_LENGTH = 100;
+const MAX_NOTE_LENGTH = 500;
 const MAX_AI_MESSAGE_LENGTH = 500;
 const VALID_QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 

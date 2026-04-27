@@ -3,7 +3,7 @@
  * 处理任务的增删改查 (CRUD) 相关逻辑
  */
 
-import { MAX_TASK_LENGTH, taskDB, validateTaskContent } from './storage.js';
+import { MAX_TASK_LENGTH, MAX_NOTE_LENGTH, taskDB, validateTaskContent } from './storage.js';
 import { createDialogContent, openStackedDialog } from './dialog.js';
 import { showError, showSuccess, QUADRANT_CONFIG, escapeHtml } from './uiController.js';
 
@@ -226,10 +226,10 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
         id="taskEditNote"
         class="task-dialog-input"
         rows="3"
-        maxlength="100"
+        maxlength="${MAX_NOTE_LENGTH}"
         placeholder="添加任务备注（可选）"
       ></textarea>
-      <div class="task-dialog-char-count" id="taskNoteCharCount">0/100</div>
+      <div class="task-dialog-char-count" id="taskNoteCharCount">0/${MAX_NOTE_LENGTH}</div>
       <label class="task-dialog-label" for="taskEditQuadrant">任务象限</label>
       <select id="taskEditQuadrant" class="task-dialog-select">
         ${Object.entries(QUADRANT_CONFIG).map(([value, config]) => `<option value="${value}">${config.shortCode} · ${config.label}</option>`).join('')}
@@ -269,11 +269,11 @@ function createTaskEditDialogContent(task, close, defaultQuadrant = 'q1') {
 
     // 初始化字数统计
     updateCharCount(content, contentCharCount, MAX_TASK_LENGTH);
-    updateCharCount(note, noteCharCount, 100);
+    updateCharCount(note, noteCharCount, MAX_NOTE_LENGTH);
 
     // 监听输入事件，实时更新字数显示
     const handleContentInput = () => updateCharCount(content, contentCharCount, MAX_TASK_LENGTH);
-    const handleNoteInput = () => updateCharCount(note, noteCharCount, 100);
+    const handleNoteInput = () => updateCharCount(note, noteCharCount, MAX_NOTE_LENGTH);
 
     content.addEventListener('input', handleContentInput);
     note.addEventListener('input', handleNoteInput);
