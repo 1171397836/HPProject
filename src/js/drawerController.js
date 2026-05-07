@@ -109,13 +109,13 @@ function groupTasksByYearMonthWeek(tasks) {
 /**
  * 渲染抽屉任务列表
  * @param {Array} tasks - 所有任务列表
- * @param {Object} callbacks - 操作回调函数 { onToggleTask, onDeleteTask }
+ * @param {Object} callbacks - 操作回调函数 { onToggleTask, onDeleteTask, onEditTask }
  */
 function renderDrawerTasks(tasks, callbacks = {}) {
   const drawerContent = document.getElementById('drawerContent');
   if (!drawerContent) return;
 
-  const { onToggleTask, onDeleteTask } = callbacks;
+  const { onToggleTask, onDeleteTask, onEditTask } = callbacks;
   const activeTab = document.querySelector('.drawer-tab.active')?.dataset.tab || 'today';
 
   const completedTasks = tasks
@@ -149,13 +149,13 @@ function renderDrawerTasks(tasks, callbacks = {}) {
 
   // history Tab 使用三级折叠渲染
   if (activeTab === 'history') {
-    renderHistoryCollapsible(drawerContent, filteredTasks, onToggleTask, onDeleteTask);
+    renderHistoryCollapsible(drawerContent, filteredTasks, onToggleTask, onDeleteTask, onEditTask);
     return;
   }
 
   // today 和 week Tab 保持平铺渲染
   filteredTasks.forEach(task => {
-    const item = createTaskItemElement(task, onToggleTask, onDeleteTask);
+    const item = createTaskItemElement(task, onToggleTask, onDeleteTask, onEditTask);
     drawerContent.appendChild(item);
   });
 }
@@ -165,9 +165,10 @@ function renderDrawerTasks(tasks, callbacks = {}) {
  * @param {Object} task - 任务对象
  * @param {Function} onToggleTask - 切换完成状态回调
  * @param {Function} onDeleteTask - 删除任务回调
+ * @param {Function} onEditTask - 编辑任务回调
  * @returns {HTMLElement} 任务项元素
  */
-function createTaskItemElement(task, onToggleTask, onDeleteTask) {
+function createTaskItemElement(task, onToggleTask, onDeleteTask, onEditTask) {
   const item = document.createElement('div');
   item.className = 'drawer-task-item';
   item.innerHTML = `
@@ -182,16 +183,27 @@ function createTaskItemElement(task, onToggleTask, onDeleteTask) {
   `;
 
   const checkBtn = item.querySelector('.drawer-task-check');
-  checkBtn.addEventListener('click', () => {
+  checkBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     if (onToggleTask) {
       onToggleTask(task._id, false);
     }
   });
 
   const deleteBtn = item.querySelector('[data-action="delete"]');
-  deleteBtn.addEventListener('click', () => {
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     if (onDeleteTask) {
       onDeleteTask(task._id);
+    }
+  });
+
+  item.addEventListener('click', (e) => {
+    if (e.target.closest('.drawer-task-check') || e.target.closest('.matrix-action-btn')) {
+      return;
+    }
+    if (onEditTask) {
+      onEditTask(task._id);
     }
   });
 
@@ -204,8 +216,9 @@ function createTaskItemElement(task, onToggleTask, onDeleteTask) {
  * @param {Array} tasks - 已过滤的历史任务列表
  * @param {Function} onToggleTask - 切换完成状态回调
  * @param {Function} onDeleteTask - 删除任务回调
+ * @param {Function} onEditTask - 编辑任务回调
  */
-function renderHistoryCollapsible(container, tasks, onToggleTask, onDeleteTask) {
+function renderHistoryCollapsible(container, tasks, onToggleTask, onDeleteTask, onEditTask) {
   const tree = groupTasksByYearMonthWeek(tasks);
 
   // 找到最近一周的key，用于默认展开
@@ -242,7 +255,7 @@ function renderHistoryCollapsible(container, tasks, onToggleTask, onDeleteTask) 
               // 叶子节点：渲染任务列表
               const fragment = document.createDocumentFragment();
               weekData.tasks.forEach(task => {
-                fragment.appendChild(createTaskItemElement(task, onToggleTask, onDeleteTask));
+                fragment.appendChild(createTaskItemElement(task, onToggleTask, onDeleteTask, onEditTask));
               });
               return fragment;
             });

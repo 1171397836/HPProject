@@ -156,7 +156,8 @@ async function refreshTasks() {
       });
       renderDrawerTasks(tasks, {
         onToggleTask: handleToggleTask,
-        onDeleteTask: handleDeleteTask
+        onDeleteTask: handleDeleteTask,
+        onEditTask: handleEditTask
       });
       updateHeaderStats(getTaskStats().pending);
     }
@@ -194,7 +195,8 @@ function refreshUI(options = {}) {
   });
   renderDrawerTasks(tasks, {
     onToggleTask: handleToggleTask,
-    onDeleteTask: handleDeleteTask
+    onDeleteTask: handleDeleteTask,
+    onEditTask: handleEditTask
   });
   updateHeaderStats(getTaskStats().pending);
 }
@@ -326,7 +328,8 @@ function bindEventListeners() {
       const tasks = getCurrentTasks();
       renderDrawerTasks(tasks, {
         onToggleTask: handleToggleTask,
-        onDeleteTask: handleDeleteTask
+        onDeleteTask: handleDeleteTask,
+        onEditTask: handleEditTask
       });
     }
   });
