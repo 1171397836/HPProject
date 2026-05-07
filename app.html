@@ -1429,6 +1429,220 @@
             text-align: center;
             line-height: 14px;
         }
+        /* Workspace Switcher */
+        .workspace-switcher {
+            position: relative;
+        }
+        .workspace-switcher-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-md, 8px);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary, #1a1a1a);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .workspace-switcher-btn:hover {
+            border-color: rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .workspace-switcher-name {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .workspace-switcher-arrow {
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #999;
+        }
+        .workspace-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 180px;
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 1001;
+            display: none;
+            padding: 4px 0;
+        }
+        .workspace-dropdown.show {
+            display: block;
+        }
+        .workspace-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #1a1a1a;
+            transition: background 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .workspace-dropdown-item:hover {
+            background: rgba(249, 115, 22, 0.05);
+        }
+        .workspace-dropdown-item.active {
+            font-weight: 600;
+            color: #f97316;
+        }
+        .workspace-dropdown-item.active::before {
+            content: '✓';
+            font-size: 12px;
+            width: 16px;
+            flex-shrink: 0;
+        }
+        .workspace-dropdown-item:not(.active)::before {
+            content: '';
+            width: 16px;
+            flex-shrink: 0;
+        }
+        .workspace-dropdown-divider {
+            height: 1px;
+            background: rgba(0,0,0,0.08);
+            margin: 4px 0;
+        }
+        .workspace-dropdown-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #888;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            transition: color 0.15s;
+        }
+        .workspace-dropdown-action:hover {
+            color: #f97316;
+        }
+        .workspace-default-badge {
+            font-size: 10px;
+            color: #999;
+            background: rgba(0,0,0,0.05);
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+        .workspace-active-badge {
+            font-size: 10px;
+            color: #f97316;
+            background: rgba(249, 115, 22, 0.1);
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+        /* Workspace Manage Dialog */
+        .workspace-manage-dialog {
+            padding: 8px 0;
+        }
+        .workspace-manage-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-radius: 8px;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .workspace-manage-row:hover {
+            background: rgba(249, 115, 22, 0.06);
+        }
+        .workspace-manage-row:last-child {
+            border-bottom: none;
+        }
+        .workspace-manage-row-active {
+            background: rgba(249, 115, 22, 0.08);
+        }
+        .workspace-manage-name {
+            font-size: 14px;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .workspace-manage-actions {
+            display: flex;
+            gap: 4px;
+        }
+        .workspace-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .workspace-action-btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        .workspace-manage-add {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 4px;
+        }
+        .workspace-manage-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .workspace-manage-input:focus {
+            border-color: #f97316;
+        }
+        .workspace-manage-add-btn {
+            padding: 8px 16px;
+            background: #f97316;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .workspace-manage-add-btn:hover {
+            background: #ea580c;
+        }
+
+        @media (max-width: 640px) {
+            .workspace-switcher-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            .workspace-switcher-name {
+                max-width: 60px;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -1436,7 +1650,7 @@
     <div class="app-page">
         <!-- 顶部应用栏 -->
         <header class="app-header">
-            <div style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
                 <button class="menu-btn" id="menuBtn" title="打开菜单">☰</button>
                 <a href="app.html" class="logo">
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1450,6 +1664,18 @@
                     </svg>
                     <span>铁腕</span>
                 </a>
+                <!-- Workspace Switcher -->
+                <div class="workspace-switcher" id="workspaceSwitcher" style="display: none;">
+                    <button class="workspace-switcher-btn" id="workspaceSwitcherBtn" title="切换工作区">
+                        <span class="workspace-switcher-name" id="workspaceName">默认</span>
+                        <span class="workspace-switcher-arrow"></span>
+                    </button>
+                    <div class="workspace-dropdown" id="workspaceDropdown">
+                        <div class="workspace-dropdown-list" id="workspaceDropdownList"></div>
+                        <div class="workspace-dropdown-divider"></div>
+                        <button class="workspace-dropdown-action" id="workspaceManageBtn">管理工作区</button>
+                    </div>
+                </div>
             </div>
             <div class="app-header-right">
                 <div class="user-menu" id="userMenu">

@@ -10,6 +10,20 @@ import { MAX_TASK_LENGTH, MAX_AI_MESSAGE_LENGTH } from './storage.js';
 import { handleLogout, requireAuth, updateUserDisplay } from './auth.js';
 import { checkIsAdmin } from './invitationService.js';
 
+import {
+  initWorkspace,
+  getWorkspaces,
+  getActiveWorkspaceId,
+  getActiveWorkspace,
+  setActiveWorkspace,
+  createWorkspace,
+  renameWorkspace,
+  deleteWorkspace,
+  onWorkspaceChange,
+  MAX_WORKSPACE_NAME_LENGTH,
+  MAX_WORKSPACES_PER_USER
+} from './workspaceService.js';
+
 // 导入控制器模块
 import {
   addTask,
@@ -49,9 +63,12 @@ import {
   getIsAIMode,
   initAIChat,
   initAIConfig,
+  reloadAIChat,
   setCurrentTasks as setAITasks,
   setCurrentUser as setAIUser
 } from './aiController.js';
+
+import { openStackedDialog, createDialogContent } from './dialog.js';
 
 let currentUser = null;
 let isLogoutSubmitting = false;
@@ -75,6 +92,19 @@ async function initApp() {
 
   // 检查管理员权限并显示/隐藏邀请码管理按钮
   await checkAndShowAdminMenu();
+
+  // 初始化工作区
+  const wsResult = await initWorkspace();
+  if (wsResult.success) {
+    renderWorkspaceSwitcher(wsResult.workspaces, wsResult.activeWorkspaceId);
+  }
+
+  // 注册工作区切换监听
+  onWorkspaceChange(async () => {
+    await refreshTasks();
+    reloadAIChat();
+    updateWorkspaceSwitcherUI();
+  });
 
   // 绑定事件监听器
   bindEventListeners();
@@ -287,6 +317,9 @@ function bindEventListeners() {
     await confirmBeforeLogout({ triggerElement: event.currentTarget });
   });
 
+  // 绑定工作区切换器事件
+  bindWorkspaceSwitcherEvents();
+
   // 绑定抽屉事件
   bindDrawerEventListeners({
     onRenderTasks: () => {
@@ -318,6 +351,204 @@ function bindEventListeners() {
     if (!document.hidden && currentUser) {
       refreshTasks();
     }
+  });
+}
+
+/**
+ * 渲染工作区切换器
+ */
+function renderWorkspaceSwitcher(workspaces, activeWorkspaceId) {
+  const switcher = document.getElementById('workspaceSwitcher');
+  if (!switcher) return;
+
+  switcher.style.display = 'flex';
+  updateWorkspaceSwitcherUI();
+  renderWorkspaceDropdownList();
+}
+
+function updateWorkspaceSwitcherUI() {
+  const nameEl = document.getElementById('workspaceName');
+  const active = getActiveWorkspace();
+  if (nameEl && active) {
+    nameEl.textContent = active.name;
+  }
+  renderWorkspaceDropdownList();
+}
+
+function renderWorkspaceDropdownList() {
+  const list = document.getElementById('workspaceDropdownList');
+  if (!list) return;
+
+  const workspaces = getWorkspaces();
+  const activeId = getActiveWorkspaceId();
+
+  list.innerHTML = workspaces.map(ws => `
+    <button class="workspace-dropdown-item${ws._id === activeId ? ' active' : ''}"
+            data-workspace-id="${ws._id}">
+      ${ws.name}${ws.isDefault ? ' <span class="workspace-default-badge">默认</span>' : ''}
+    </button>
+  `).join('');
+
+  list.querySelectorAll('.workspace-dropdown-item').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const wsId = btn.dataset.workspaceId;
+      if (wsId !== activeId) {
+        await setActiveWorkspace(wsId);
+      }
+      closeWorkspaceDropdown();
+    });
+  });
+}
+
+function toggleWorkspaceDropdown() {
+  const dropdown = document.getElementById('workspaceDropdown');
+  if (dropdown) {
+    dropdown.classList.toggle('show');
+  }
+}
+
+function closeWorkspaceDropdown() {
+  const dropdown = document.getElementById('workspaceDropdown');
+  if (dropdown) {
+    dropdown.classList.remove('show');
+  }
+}
+
+function bindWorkspaceSwitcherEvents() {
+  document.getElementById('workspaceSwitcherBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleWorkspaceDropdown();
+  });
+
+  document.getElementById('workspaceManageBtn')?.addEventListener('click', () => {
+    closeWorkspaceDropdown();
+    openWorkspaceManageDialog();
+  });
+
+  document.addEventListener('click', (e) => {
+    const switcher = document.getElementById('workspaceSwitcher');
+    if (switcher && !switcher.contains(e.target)) {
+      closeWorkspaceDropdown();
+    }
+  });
+}
+
+async function openWorkspaceManageDialog() {
+  await openStackedDialog({
+    title: '工作区管理',
+    render: ({ body, close }) => {
+      const content = createWorkspaceManageContent(close);
+      body.appendChild(content.element);
+      return { cleanup: content.cleanup, focusTarget: content.focusTarget };
+    }
+  });
+}
+
+function createWorkspaceManageContent(closeDialog) {
+  return createDialogContent(`
+    <div class="workspace-manage-dialog">
+      <div class="workspace-manage-list" id="workspaceManageList"></div>
+      <div class="workspace-manage-add">
+        <input type="text" id="newWorkspaceName" placeholder="新建工作区名称"
+               maxlength="${MAX_WORKSPACE_NAME_LENGTH}" class="workspace-manage-input">
+        <button type="button" id="addWorkspaceBtn" class="workspace-manage-add-btn">添加</button>
+      </div>
+    </div>
+  `, (element) => {
+    const listEl = element.querySelector('#workspaceManageList');
+    const nameInput = element.querySelector('#newWorkspaceName');
+    const addBtn = element.querySelector('#addWorkspaceBtn');
+
+    function renderList() {
+      const workspaces = getWorkspaces();
+      const activeId = getActiveWorkspaceId();
+
+      listEl.innerHTML = workspaces.map(ws => `
+        <div class="workspace-manage-row${ws._id === activeId ? ' workspace-manage-row-active' : ''}" data-id="${ws._id}">
+          <span class="workspace-manage-name">
+            ${ws.name}
+            ${ws.isDefault ? '<span class="workspace-default-badge">默认</span>' : ''}
+            ${ws._id === activeId ? '<span class="workspace-active-badge">当前</span>' : ''}
+          </span>
+          <span class="workspace-manage-actions">
+            <button class="workspace-action-btn workspace-rename-btn" data-id="${ws._id}" title="重命名">✏️</button>
+            ${ws.isDefault ? '' : `<button class="workspace-action-btn workspace-delete-btn" data-id="${ws._id}" title="删除">🗑️</button>`}
+          </span>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.workspace-manage-row').forEach(row => {
+        row.addEventListener('click', async () => {
+          const wsId = row.dataset.id;
+          if (wsId !== getActiveWorkspaceId()) {
+            await setActiveWorkspace(wsId);
+            renderList();
+          }
+        });
+      });
+
+      listEl.querySelectorAll('.workspace-rename-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const wsId = btn.dataset.id;
+          const ws = getWorkspaces().find(w => w._id === wsId);
+          if (!ws) return;
+          const newName = prompt('输入新名称', ws.name);
+          if (newName !== null && newName.trim()) {
+            const result = await renameWorkspace(wsId, newName);
+            if (result.success) {
+              renderList();
+              updateWorkspaceSwitcherUI();
+            } else {
+              alert(result.error);
+            }
+          }
+        });
+      });
+
+      listEl.querySelectorAll('.workspace-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const wsId = btn.dataset.id;
+          const ws = getWorkspaces().find(w => w._id === wsId);
+          if (!ws) return;
+          const confirmed = confirm(`确定删除工作区「${ws.name}」吗？\n该工作区下的所有任务将被永久删除，此操作不可撤销。`);
+          if (confirmed) {
+            const result = await deleteWorkspace(wsId);
+            if (result.success) {
+              renderList();
+              updateWorkspaceSwitcherUI();
+            } else {
+              alert(result.error);
+            }
+          }
+        });
+      });
+    }
+
+    addBtn.addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      if (!name) return;
+      const result = await createWorkspace(name);
+      if (result.success) {
+        nameInput.value = '';
+        renderList();
+        updateWorkspaceSwitcherUI();
+      } else {
+        alert(result.error);
+      }
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addBtn.click();
+      }
+    });
+
+    renderList();
+
+    return { focusTarget: nameInput };
   });
 }
 

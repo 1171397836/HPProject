@@ -14,7 +14,7 @@
 
 - 项目名称：铁腕 - 智能任务管理工具
 - 当前形态：标准 Vite 前端项目，已部署至 Vercel
-- 核心业务：登录/注册、任务 CRUD、四象限展示、确认弹窗、退出登录、AI 助手
+- 核心业务：登录/注册、任务 CRUD、四象限展示、工作区空间隔离、确认弹窗、退出登录、AI 助手
 - 云端后端：Supabase (Auth + PostgreSQL)，实现多设备实时同步
 - 正式域名：`ironhand.top`
 - 已完全移除 CloudBase 依赖
@@ -33,13 +33,18 @@ HPProject/
 ├── index.html            ← 落地页/介绍页
 ├── login.html            ← 登录/注册页
 ├── app.html              ← 任务主页面
-├── motherduck.html       ← 独立页面/设计稿性质页面
+├── admin.html            ← 邀请码管理后台
+├── scripts/              ← 数据库迁移脚本
+│   └── workspace-migration.sql
 ├── src/                  ← 源码资源目录
 │   ├── css/
 │   ├── js/
+│   │   ├── storage/      ← 存储策略（本地/云端/混合）
+│   │   └── prompts/      ← AI 提示词配置
 │   ├── scripts/          ← 测试脚本等
 │   └── Design.md
-└── dist/                 ← 构建输出（.gitignore）
+├── dist/                 ← 构建输出（.gitignore）
+└── release/              ← Electron 桌面端打包产物（.gitignore）
 ```
 
 ## 4. 顶层文件职责
@@ -50,6 +55,7 @@ HPProject/
 | `vite.config.js` | Vite 配置文件，配置多入口打包 |
 | `PRD.md` | 产品需求文档，偏产品视角 |
 | `vercel.json` | Vercel 部署配置（build 命令、输出目录 `dist`） |
+| `scripts/` | 数据库迁移脚本（如 workspace-migration.sql） |
 | `.env.example` | 环境变量配置参考 |
 | `.env.local` | 本地开发 Supabase 凭证（不提交到 git） |
 | `src/` | 实际前端应用资源目录 (js, css) |
@@ -84,7 +90,6 @@ HPProject/
 | `app.html` | 任务主页面 | 是 |
 | `admin.html` | 邀请码管理后台（仅管理员） | 是 |
 | `index.html` | 落地页/介绍页，提供跳转登录入口 | 否 |
-| `motherduck.html` | 独立页面/设计稿性质页面 | 否 |
 
 ### 5.5 主链路
 
@@ -98,6 +103,8 @@ app.html
   └── src/js/app.js
         ├── auth.js
         ├── storage.js
+        ├── workspaceService.js (工作区初始化与切换)
+        ├── aiController.js (AI 助手控制)
         ├── dialog.js
         └── invitationService.js (检查管理员权限)
 
@@ -113,19 +120,24 @@ admin.html (应用页侧边栏进入，仅管理员)
 
 | 文件 | 职责 | 什么时候先看它 |
 |------|------|----------------|
-| `src/js/config.js` | 全局配置（环境判断、API 地址、LocalStorage 键名等） | 涉及环境变量、存储键名、接口地址变更时 |
+| `src/js/config.js` | 全局配置（环境判断、存储键名集中管理） | 涉及环境变量、存储键名变更时 |
+| `src/js/localStore.js` | localStorage 统一访问封装（带 try/catch 安全保护） | localStorage 读写异常、需要新增本地存储时 |
 | `src/js/supabaseClient.js` | Supabase 客户端初始化（使用 `import.meta.env`） | Supabase 连接异常、凭证配置问题 |
 | `src/js/login.js` | 登录/注册页控制、表单校验、提交逻辑、已登录跳转 | 登录页交互异常、表单校验异常 |
-| `src/js/app.js` | 应用页初始化、任务渲染、增删改查、象限切换、统计、清空已完成、退出流程 | 任务页任何核心功能异常 |
+| `src/js/app.js` | 应用页初始化、任务渲染、工作区切换器/管理弹窗、增删改查、象限切换、统计、退出流程 | 任务页任何核心功能异常 |
 | `src/js/auth.js` | 认证状态、登录注册、鉴权守卫、用户展示、退出登录 | 登录态异常、跳转异常、用户信息异常 |
-| `src/js/storage.js` | 任务数据访问层（Supabase PostgreSQL） | 任务数据读写异常、数据库查询问题 |
-| `src/js/aiConfig.js` | AI 配置管理（提供商、API Key、模型选择），存储到 Supabase user_configs | AI 功能配置异常 |
-| `src/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出、localStorage 持久化） | AI 对话功能异常、聊天记录不保存 |
+| `src/js/storage.js` | 任务数据访问层（Supabase PostgreSQL），按 workspace 过滤 | 任务数据读写异常、数据库查询问题 |
+| `src/js/workspaceService.js` | 工作区 CRUD、状态管理（当前选中空间）、切换监听 | 工作区切换/创建/删除异常 |
+| `src/js/aiConfig.js` | AI 配置管理（提供商、API Key、模型选择），支持本地/云端存储策略 | AI 功能配置异常 |
+| `src/js/aiChat.js` | AI 聊天核心逻辑（消息管理、LLM API 通信、流式输出、按 workspace 隔离聊天记录） | AI 对话功能异常、聊天记录不保存 |
+| `src/js/aiController.js` | AI 助手 UI 控制（消息渲染、设置弹窗、会话管理、工作区切换时重载聊天） | AI 面板交互异常 |
+| `src/js/uiController.js` | 通用 UI 控制（Toast 提示、象限选择器、任务矩阵渲染、拖拽） | 象限切换/Toast/任务渲染异常 |
 | `src/js/taskController.js` | 任务编辑对话框、确认对话框、任务CRUD控制逻辑 | 编辑任务弹窗、任务备注功能异常 |
 | `src/js/dialog.js` | 通用弹窗与堆叠弹窗能力底层支持 | 弹窗栈、对话框渲染异常 |
 | `src/js/drawerController.js` | 侧边栏抽屉控制（打开/关闭/Tab切换/任务渲染），历史已完成Tab的年→月→周三级折叠 | 抽屉交互异常、历史折叠分组异常 |
 | `src/js/invitationService.js` | 邀请码服务（验证、生成、使用追踪、管理员权限检查） | 邀请码验证失败、使用次数不更新、管理员权限异常 |
 | `src/js/admin.js` | 邀请码管理后台逻辑（生成邀请码、列表展示） | 管理后台功能异常 |
+| `src/js/storage/` | 存储策略模块（LocalStrategy、CloudStrategy、HybridStrategy、StorageFactory） | AI 配置云端同步异常 |
 
 ### 6.2 历史/草稿文件
 
@@ -158,6 +170,7 @@ admin.html (应用页侧边栏进入，仅管理员)
 - 关键 DOM：
   - `userName` / `userAvatar`
   - `logoutBtn`
+  - `workspaceSwitcher` / `workspaceName` / `workspaceDropdown` (工作区切换器)
   - 左侧菜单按钮 (`menuBtn`) 和已完成任务抽屉 (`completedDrawer`)
   - `questionsBadge`
   - `quadrant-1` ~ `quadrant-4`
@@ -186,12 +199,14 @@ admin.html (应用页侧边栏进入，仅管理员)
 | 编辑任务 | `src/js/app.js`、`src/js/taskController.js`、`src/js/dialog.js` |
 | 删除任务 | `src/js/app.js` |
 | 侧边栏/已完成历史 | `src/js/drawerController.js`、`src/js/app.js` |
-| 四象限渲染 | `src/js/app.js` |
+| 四象限渲染 | `src/js/uiController.js`、`src/js/app.js` |
+| 工作区管理/切换 | `src/js/workspaceService.js`、`src/js/app.js` |
 | 退出登录 | `src/js/app.js`、`src/js/auth.js` |
 | 通用确认弹窗 | `src/js/dialog.js` 与 `src/js/app.js` 调用处 |
-| AI 助手对话 | `src/js/aiChat.js`、`src/js/aiConfig.js` |
+| AI 助手对话 | `src/js/aiChat.js`、`src/js/aiController.js`、`src/js/aiConfig.js` |
 | **邀请码验证/生成** | `src/js/invitationService.js`、`src/js/login.js` |
 | **邀请码管理后台** | `src/js/admin.js`、`admin.html` |
+| 本地存储统一接口 | `src/js/localStore.js`、`src/js/config.js` |
 | 构建与部署 | `vite.config.js`、`vercel.json` |
 
 ## 9. 数据与状态
@@ -205,9 +220,11 @@ admin.html (应用页侧边栏进入，仅管理员)
 ### 9.2 任务数据
 
 - `storage.js` 是唯一任务数据访问层，使用 Supabase PostgreSQL 存储
+- 所有任务查询和写入均按当前 workspace 过滤（`workspace_id`）
 - 任务字段核心包括：
   - `id` (UUID)
   - `user_id`
+  - `workspace_id` (关联工作区)
   - `content` (任务内容，最多20字)
   - `quadrant`
   - `completed`
@@ -234,8 +251,10 @@ admin.html (应用页侧边栏进入，仅管理员)
 
 ### 9.5 页面状态
 
-- 当前选中象限由 `app.js` 管理，并持久化到本地存储
-- 当前任务列表由 `app.js` 内存状态维护，再统一渲染到四象限 DOM
+- 当前选中象限由 `uiController.js` 管理，通过 `localStore.js` 持久化到本地存储
+- 当前工作区由 `workspaceService.js` 管理，通过 `localStore.js` 持久化到本地存储
+- AI 聊天记录由 `aiChat.js` 管理，按 userId + workspaceId 隔离存储
+- 所有 localStorage 访问统一通过 `localStore.js`，键名集中在 `config.js` 的 `STORAGE_KEYS`
 
 ## 10. 测试与验证入口
 
@@ -335,6 +354,9 @@ admin.html (应用页侧边栏进入，仅管理员)
 - `taskInput`
 - `quadrant-1`
 - `supabase`
+- `workspaceSwitcher`
+- `initWorkspace`
+- `localStore`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
@@ -345,7 +367,8 @@ admin.html (应用页侧边栏进入，仅管理员)
 - 新增页面入口
 - 主链路脚本发生替换
 - 新增核心模块
-- 本地模式切换规则变化
+- 数据库表结构变更
+- localStorage 存储键变更
 - 测试入口变化
 - 历史草稿文件被启用或删除
 
@@ -355,3 +378,5 @@ admin.html (应用页侧边栏进入，仅管理员)
 - 当前调研项目现状时，应优先以 `login.html`、`app.html`、`src/js/*.js` 的实际引用关系为准
 - Supabase 凭证不在源码中硬编码，通过 Vite 从环境变量注入到构建输出（本地为 `.env.local`，线上为 Vercel 环境变量）
 - 抽屉三个 Tab（今日/本周/历史）是互斥分类，本周 Tab 不含今日（PRD 已明确）
+- 所有 localStorage 访问必须通过 `localStore.js`，禁止直接使用 `window.localStorage`
+- tasks 表的 `workspace_id` 当前为 nullable（生产安全迁移），BEFORE INSERT 触发器自动补全

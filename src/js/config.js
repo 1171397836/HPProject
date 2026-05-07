@@ -10,7 +10,10 @@ const ENV = (hostname === 'localhost' || hostname === '127.0.0.1') ? 'local' : '
 const CONFIG = {
   ENV,
   STORAGE_KEYS: {
-    CURRENT_QUADRANT: 'tiewan_current_quadrant'
+    CURRENT_QUADRANT: 'tiewan_current_quadrant',
+    CURRENT_WORKSPACE: 'tiewan_current_workspace',
+    AI_CHAT_HISTORY: 'tiewan_ai_chat_history',
+    AI_CONFIG: 'tiewan_ai_config'
   }
 };
 

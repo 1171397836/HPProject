@@ -24,6 +24,7 @@ import {
   getWelcomeMessage,
   initChat,
   isGenerating,
+  switchWorkspaceChat,
   MESSAGE_TYPE,
   sendMessageStream,
   setCallbacks
@@ -638,12 +639,21 @@ function bindAIEventListeners(callbacks = {}) {
   });
 }
 
+function reloadAIChat() {
+  switchWorkspaceChat();
+  const session = getCurrentSession();
+  if (session) {
+    renderAIChatMessages(session.messages);
+  }
+}
+
 export {
   bindAIEventListeners,
   getIsAIMode,
   initAIChat,
   initAIConfig,
   openAISettingsDialog,
+  reloadAIChat,
   renderAIChatMessages,
   renderAIChatSessions,
   sendAIMessage,

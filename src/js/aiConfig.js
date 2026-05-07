@@ -1,5 +1,6 @@
 import { StorageFactory } from './storage/index.js';
 import { getCurrentUser } from './auth.js';
+import CONFIG from './config.js';
 
 /**
  * AI 配置管理模块
@@ -8,7 +9,7 @@ import { getCurrentUser } from './auth.js';
  * API Key 始终只保存在本地，不上传到云端
  */
 
-const AI_CONFIG_KEY = 'tiewan_ai_config';
+const AI_CONFIG_KEY = CONFIG.STORAGE_KEYS.AI_CONFIG;
 
 const AI_PROVIDERS = {
   deepseek: {

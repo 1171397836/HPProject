@@ -8,7 +8,10 @@ import { AI_PERSONA, ANSWER_STYLE } from './prompts/roleConfig.js';
 import { AI_CAPABILITIES, QUADRANT_RULES } from './prompts/taskRules.js';
 import { WELCOME_MESSAGE, EMPTY_TASK_MESSAGE } from './prompts/uiMessages.js';
 import { getCurrentUser } from './auth.js';
+import { getActiveWorkspaceId } from './workspaceService.js';
 import { getMondayOfWeek } from './drawerController.js';
+import localStore from './localStore.js';
+import CONFIG from './config.js';
 
 // 消息类型定义
 const MESSAGE_TYPE = {
@@ -27,6 +30,7 @@ let currentSessionId = null;
 let isStreaming = false;
 let abortController = null;
 let saveHistoryTimer = null;
+let loadedStorageKey = null;
 
 // 回调函数存储
 const callbacks = {
@@ -37,76 +41,63 @@ const callbacks = {
   onError: null
 };
 
-function getStorageKey() {
+function buildStorageKey() {
   const user = getCurrentUser();
   const userId = user ? user.uid : 'default';
-  return `tiewan_ai_chat_history_${userId}`;
-}
-
-/**
- * 获取安全的 localStorage 引用
- */
-function getSafeStorage() {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage;
-    }
-  } catch (error) {
-    console.warn('[AIChat] localStorage 不可用', error);
-  }
-  return null;
+  const workspaceId = getActiveWorkspaceId() || 'default';
+  return `${CONFIG.STORAGE_KEYS.AI_CHAT_HISTORY}_${userId}_${workspaceId}`;
 }
 
 /**
  * 加载聊天历史
  */
 function loadChatHistory() {
-  const storage = getSafeStorage();
-  if (!storage) return;
+  loadedStorageKey = buildStorageKey();
+  sessions = [];
+  currentSessionId = null;
 
-  try {
-    const saved = storage.getItem(getStorageKey());
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
-        sessions = parsed;
-      }
-    }
-  } catch (error) {
-    console.warn('[AIChat] 加载历史失败', error);
+  const parsed = localStore.getJSON(loadedStorageKey);
+  if (Array.isArray(parsed)) {
+    sessions = parsed;
   }
 
   if (sessions.length === 0) {
     createNewSession(false);
   } else {
-    // 降序排序，最新的在前面
     sessions.sort((a, b) => b.updatedAt - a.updatedAt);
     currentSessionId = sessions[0].id;
   }
-  
+
   if (callbacks.onSessionUpdate) {
     callbacks.onSessionUpdate(sessions, currentSessionId);
   }
 }
 
 /**
- * 保存聊天历史
+ * 保存聊天历史（始终写入加载时锁定的 key）
  */
 function saveChatHistory() {
-  const storage = getSafeStorage();
-  if (!storage) return;
+  if (!loadedStorageKey) return;
 
-  try {
-    // 限制每个会话的消息数量
-    sessions.forEach(session => {
-      if (session.messages.length > MAX_HISTORY_LENGTH) {
-        session.messages = session.messages.slice(-MAX_HISTORY_LENGTH);
-      }
-    });
-    storage.setItem(getStorageKey(), JSON.stringify(sessions));
-  } catch (error) {
-    console.warn('[AIChat] 保存历史失败', error);
+  sessions.forEach(session => {
+    if (session.messages.length > MAX_HISTORY_LENGTH) {
+      session.messages = session.messages.slice(-MAX_HISTORY_LENGTH);
+    }
+  });
+  localStore.set(loadedStorageKey, sessions);
+}
+
+/**
+ * 切换工作区聊天记录
+ * 先把当前 sessions 存到旧 key，再从新 workspace 加载
+ */
+function switchWorkspaceChat() {
+  if (saveHistoryTimer) {
+    clearTimeout(saveHistoryTimer);
+    saveHistoryTimer = null;
   }
+  saveChatHistory();
+  loadChatHistory();
 }
 
 /**
@@ -685,7 +676,8 @@ export {
   saveChatHistory,
   sendMessage,
   sendMessageStream,
-  setCallbacks
+  setCallbacks,
+  switchWorkspaceChat
 };
 
 export default {

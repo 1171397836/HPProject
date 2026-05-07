@@ -4,6 +4,7 @@
  */
 
 import CONFIG from './config.js';
+import localStore from './localStore.js';
 
 const STORAGE_KEY_QUADRANT = CONFIG.STORAGE_KEYS.CURRENT_QUADRANT;
 
@@ -39,18 +40,6 @@ function setCurrentQuadrant(quadrant) {
 }
 
 /**
- * 获取安全的 localStorage 引用
- * @returns {Storage|null}
- */
-function getSafeStorage() {
-  try {
-    return window.localStorage;
-  } catch (error) {
-    return null;
-  }
-}
-
-/**
  * 获取象限存储键
  * @param {Object} currentUser - 当前用户
  * @returns {string} 存储键
@@ -67,8 +56,7 @@ function getQuadrantStorageKey(currentUser) {
  * @param {Object} currentUser - 当前用户
  */
 function restoreQuadrantSelection(currentUser) {
-  const storage = getSafeStorage();
-  const savedQuadrant = storage?.getItem(getQuadrantStorageKey(currentUser));
+  const savedQuadrant = localStore.get(getQuadrantStorageKey(currentUser));
 
   if (savedQuadrant && QUADRANT_CONFIG[savedQuadrant]) {
     currentQuadrant = savedQuadrant;
@@ -80,8 +68,7 @@ function restoreQuadrantSelection(currentUser) {
  * @param {Object} currentUser - 当前用户
  */
 function saveQuadrantSelection(currentUser) {
-  const storage = getSafeStorage();
-  storage?.setItem(getQuadrantStorageKey(currentUser), currentQuadrant);
+  localStore.set(getQuadrantStorageKey(currentUser), currentQuadrant);
 }
 
 /**
@@ -491,7 +478,6 @@ export {
   getCurrentQuadrant,
   getIsLoading,
   getQuadrantStorageKey,
-  getSafeStorage,
   renderTaskMatrix,
   restoreQuadrantSelection,
   saveQuadrantSelection,

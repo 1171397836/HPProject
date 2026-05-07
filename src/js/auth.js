@@ -1,5 +1,6 @@
 import { supabase, supabaseUrl } from './supabaseClient.js';
 import CONFIG from './config.js';
+import localStore from './localStore.js';
 
 const AuthErrorCode = {
   INVALID_EMAIL: 'INVALID_EMAIL',
@@ -273,27 +274,16 @@ async function handleLogout(options = {}) {
  * 清除本地存储的认证相关数据
  */
 function clearAuthStorage() {
-  const globalScope = typeof window !== 'undefined' ? window : globalThis;
-  if (!globalScope.localStorage) return;
-
-  // 获取 Supabase 项目 ID 并构建 token 键名
   const projectId = getSupabaseProjectId();
   const authTokenKey = projectId ? `sb-${projectId}-auth-token` : null;
 
-  // 清除 Supabase auth token
   if (authTokenKey) {
-    globalScope.localStorage.removeItem(authTokenKey);
+    localStore.remove(authTokenKey);
   }
 
-  // 清除其他可能的认证相关键
-  const keysToRemove = [];
-  for (let i = 0; i < globalScope.localStorage.length; i++) {
-    const key = globalScope.localStorage.key(i);
-    if (key && (key.startsWith('sb-') && key.endsWith('-auth-token'))) {
-      keysToRemove.push(key);
-    }
-  }
-  keysToRemove.forEach(key => globalScope.localStorage.removeItem(key));
+  localStore.keys()
+    .filter(key => key.startsWith('sb-') && key.endsWith('-auth-token'))
+    .forEach(key => localStore.remove(key));
 }
 
 /**
@@ -315,26 +305,18 @@ function getSupabaseProjectId() {
 
 // 提供同步获取用户信息的函数（尽最大努力返回，可能为空），以兼容旧版代码
 function checkAuthStatusSync() {
-  const globalScope = typeof window !== 'undefined' ? window : globalThis;
-
-  // 动态获取 Supabase auth token 键名
   const projectId = getSupabaseProjectId();
   const authTokenKey = projectId ? `sb-${projectId}-auth-token` : null;
 
-  // 如果没有获取到项目ID，尝试查找所有可能的 Supabase auth token
   let storageStr = null;
   if (authTokenKey) {
-    storageStr = globalScope.localStorage?.getItem(authTokenKey);
+    storageStr = localStore.get(authTokenKey);
   }
 
-  // 如果指定键名没找到，尝试查找任何匹配的 sb-*-auth-token 键
-  if (!storageStr && globalScope.localStorage) {
-    for (let i = 0; i < globalScope.localStorage.length; i++) {
-      const key = globalScope.localStorage.key(i);
-      if (key && key.match(/^sb-[^-]+-auth-token$/)) {
-        storageStr = globalScope.localStorage.getItem(key);
-        if (storageStr) break;
-      }
+  if (!storageStr) {
+    const matchingKey = localStore.keys().find(key => key.match(/^sb-[^-]+-auth-token$/));
+    if (matchingKey) {
+      storageStr = localStore.get(matchingKey);
     }
   }
 

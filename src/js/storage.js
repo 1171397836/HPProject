@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
+import { getActiveWorkspaceId } from './workspaceService.js';
 import CONFIG from './config.js';
 
 const MAX_TASK_LENGTH = 100;
@@ -98,6 +99,7 @@ function normalizeTask(task) {
     ...task,
     _id: task.id, // map Supabase id to _id for frontend compatibility
     uid: task.user_id, // map user_id to uid
+    workspaceId: task.workspace_id,
     createdAt: task.created_at || new Date().toISOString(),
     updatedAt: task.updated_at || new Date().toISOString(),
     completedAt: task.completed_at || null,
@@ -126,11 +128,17 @@ const taskDB = {
       return { success: false, data: [], error: authState.error };
     }
 
+    const workspaceId = getActiveWorkspaceId();
+    if (!workspaceId) {
+      return { success: false, data: [], error: handleError({ code: 'PARAM_ERROR' }, '未选择工作区') };
+    }
+
     try {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .eq('user_id', authState.user.uid)
+        .eq('workspace_id', workspaceId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -168,9 +176,15 @@ const taskDB = {
       return { success: false, data: null, error: authState.error };
     }
 
+    const workspaceId = getActiveWorkspaceId();
+    if (!workspaceId) {
+      return { success: false, data: null, error: handleError({ code: 'PARAM_ERROR' }, '未选择工作区') };
+    }
+
     const now = new Date().toISOString();
     const newTask = {
       user_id: authState.user.uid,
+      workspace_id: workspaceId,
       content: contentValidation.normalizedContent,
       quadrant,
       completed: false,
@@ -324,11 +338,17 @@ const taskDB = {
       return { success: false, deletedCount: 0, error: authState.error };
     }
 
+    const workspaceId = getActiveWorkspaceId();
+    if (!workspaceId) {
+      return { success: false, deletedCount: 0, error: handleError({ code: 'PARAM_ERROR' }, '未选择工作区') };
+    }
+
     try {
       const { data, error } = await supabase
         .from('tasks')
         .delete()
         .eq('user_id', authState.user.uid)
+        .eq('workspace_id', workspaceId)
         .eq('completed', true)
         .select();
 
