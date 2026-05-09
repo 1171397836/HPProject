@@ -2,13 +2,15 @@
   "name": "tiewan-task-manager",
   "version": "1.0.0",
   "description": "铁腕 - 智能任务管理工具",
-  "main": "index.html",
+  "main": "electron/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node src/scripts/smoke-test.mjs"
+    "test": "node src/scripts/smoke-test.mjs",
+    "electron:dev": "npx electron .",
+    "electron:build": "vite build && npx electron-builder --win"
   },
   "keywords": [
     "task-manager",
@@ -16,8 +18,31 @@
   ],
   "author": "铁腕团队",
   "license": "MIT",
+  "build": {
+    "appId": "com.tiewan.task-manager",
+    "productName": "铁腕",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
   "devDependencies": {
     "dotenv": "^17.4.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0",
     "vite": "^5.0.0"
   },
   "dependencies": {
