@@ -14,6 +14,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    show: false,
     title: '铁腕 - 智能任务管理',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -22,10 +23,17 @@ function createWindow() {
     }
   });
 
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
   // 开发模式加载 Vite dev server，生产模式加载构建产物
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = !app.isPackaged;
   if (isDev) {
-    mainWindow.loadURL('http://localhost:3000/app.html');
+    mainWindow.loadURL('http://localhost:3000/app.html')
+      .catch(() => {
+        console.error('Dev server not running. Start with: npm run dev');
+      });
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'app.html'));
   }
@@ -66,7 +74,7 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(createWindow).catch(console.error);
 
 app.on('window-all-closed', () => {
   app.quit();
